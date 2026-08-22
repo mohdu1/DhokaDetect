@@ -1,85 +1,89 @@
+import asyncio
+import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional
-import traceback
+from typing import Optional, Dict, Any
 
-from ml_services.model_manager import LocalScamDetector
-from ml_services.fusion_engine import FusionEngine, ModalityScore
+# Local ML & Logic Imports
+from ml_services import model_manager      # Aditi's NLP Engine
+from url_detection import url_classifier   # Arnav's URL Extraction & Analysis
+from ml_services import fusion_engine      # Late-Fusion Math
+from schemas import ScanResponse
 
-app = FastAPI(title="DhokaDetect Multi-Modal Late-Fusion API", version="2.0")
+# ==========================================
+# 1. App Initialization & CORS
+# ==========================================
+app = FastAPI(title="DhokaDetect Orchestration Engine")
 
-# --- CORS MIDDLEWARE: Critical for Yug's Frontend Connection ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allows localhost connections from React/Vite
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-print("Initializing Local ML Engine...")
-text_detector = LocalScamDetector()
-fusion_engine = FusionEngine()
+# Manas's Remote GPU Vision Service
+VISION_SERVICE_URL = "https://20b78333ede132.lhr.life/api/v1/analyze-image"
 
-class MultimodalAnalysisRequest(BaseModel):
-    text_input: Optional[str] = Field(None, json_schema_extra={"example": "Dear Customer, Your MSEB electricity bill is pending. Pay within 10 mins to avoid disconnection."})
-    url_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, json_schema_extra={"example": 0.85})
-    image_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, json_schema_extra={"example": 0.0})
-    audio_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, json_schema_extra={"example": 0.0})
+# ==========================================
+# 2. Incoming Request Schema
+# ==========================================
+class AnalyzeRequest(BaseModel):
+    text_input: Optional[str] = Field(None, description="Raw SMS/WhatsApp message text")
+    image_base64: Optional[str] = Field(None, description="Base64 encoded image or frame buffer")
+    force_high_risk: Optional[bool] = Field(False, description="Manual override for demo/evaluator purposes")
 
-@app.get("/")
-def root():
-    return {"status": "online", "service": "DhokaDetect Multi-Modal API"}
+# ==========================================
+# 3. Main Orchestration Endpoint
+# ==========================================
+@app.post("/api/v1/analyze", response_model=ScanResponse)
+async def analyze_payload(request: AnalyzeRequest):
+    """
+    Core routing endpoint. Dispatches text/URL locally and async requests to the remote Vision API.
+    Fuses all returned metrics into a single explainable risk score.
+    """
+    
+    # Initialize empty modality results
+    text_result: Optional[Dict[str, Any]] = None
+    url_result: Optional[Dict[str, Any]] = None
+    vision_result: Optional[Dict[str, Any]] = None
 
-# Changed to v1 so Yug's current React code hits the correct endpoint
-@app.post("/api/v1/analyze")
-async def analyze_payload(request: MultimodalAnalysisRequest):
-    try:
-        text_modality = None
-        
-        # 1. Process Text locally if provided
-        if request.text_input:
-            text_res, _ = text_detector.predict([request.text_input])
-            res = text_res[0] if text_res else {}
-            
-            # Safe key access with fallbacks
-            text_modality = ModalityScore(
-                confidence=res.get("scam_confidence", 0.0),
-                weight=0.35,
-                red_flags=res.get("red_flags", [])
-            )
+    # Step A: Local NLP and URL Processing (Aditi & Arnav)
+    if request.text_input:
+        text_result = model_manager.analyze_text(request.text_input)
+        url_result = url_classifier.extract_and_analyze(request.text_input)
 
-        # 2. Map optional scores from other modules
-        url_modality = ModalityScore(
-            confidence=request.url_confidence, 
-            weight=0.35, 
-            red_flags=["Suspicious Domain Pattern"]
-        ) if request.url_confidence is not None else None
+    # Step B: Remote Vision Processing (Manas) - Non-blocking HTTPX Call
+    if request.image_base64:
+        async with httpx.AsyncClient() as client:
+            try:
+                # 5-second timeout requirement to prevent bottlenecking the orchestrator
+                response = await client.post(
+                    VISION_SERVICE_URL,
+                    json={"image_base64": request.image_base64},
+                    timeout=5.0 
+                )
+                response.raise_for_status()
+                vision_result = response.json()
+            except (httpx.RequestError, httpx.HTTPStatusError) as exc:
+                # Graceful degradation: If Manas's node drops, we don't crash the SIH demo.
+                print(f"[WARN] Vision microservice fallback triggered: {exc}")
+                vision_result = {
+                    "risk_score": 0.0, 
+                    "status": "unreachable_fallback",
+                    "error_log": str(exc)
+                }
 
-        image_modality = ModalityScore(
-            confidence=request.image_confidence, 
-            weight=0.15,
-            red_flags=[]
-        ) if request.image_confidence is not None else None
+    # Step C: Late-Fusion Risk Scoring
+    # Push all gathered metrics to the fusion engine to calculate the 0-100 score
+    final_response = fusion_engine.compute_final_risk(
+        text_result=text_result,
+        url_result=url_result,
+        vision_result=vision_result,
+        audio_result=None, # Audio routing reserved for future step
+        manual_override=request.force_high_risk
+    )
 
-        audio_modality = ModalityScore(
-            confidence=request.audio_confidence, 
-            weight=0.15,
-            red_flags=[]
-        ) if request.audio_confidence is not None else None
-
-        # 3. Perform Late Fusion
-        fusion_result = fusion_engine.compute_final_risk(
-            text_score=text_modality,
-            url_score=url_modality,
-            image_score=image_modality,
-            audio_score=audio_modality
-        )
-
-        return fusion_result
-
-    except Exception as e:
-        print("ERROR LOGGED IN ENDPOINT:")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Internal Processing Error: {str(e)}")
+    return final_response
