@@ -1,5 +1,6 @@
 import base64
 import io
+import os
 import cv2
 import numpy as np
 import torch
@@ -31,10 +32,20 @@ class VisionService:
         
     def _parse_input(self, image_input):
         if isinstance(image_input, str):
-            if "," in image_input:
-                image_input = image_input.split(",")[1]
-            image_bytes = base64.b64decode(image_input)
-            return Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            try:
+                return Image.open(image_input).convert("RGB")
+            except (FileNotFoundError, OSError):
+                pass
+            
+            try:
+                if "," in image_input:
+                    image_input = image_input.split(",")[1]
+                image_input += "=" * ((4 - len(image_input) % 4) % 4)
+                image_bytes = base64.b64decode(image_input)
+                return Image.open(io.BytesIO(image_bytes)).convert("RGB")
+            except Exception as e:
+                raise ValueError(f"Detection failed: {e}")
+        
         return Image.open(image_input).convert("RGB")
 
     def detect_and_explain(self, image_input):
