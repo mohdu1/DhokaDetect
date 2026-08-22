@@ -1,0 +1,1045 @@
+{
+  "dataset_name": "DhokaDetect Indian Scam Test Dataset",
+  "version": "1.0",
+  "description": "Synthetic test cases for evaluating scam detection, false positives, and multimodal risk scoring in Indian scenarios.",
+  "cases": [
+  {
+    "case_id": "DD-0001",
+
+    "scenario": {
+      "category": "upi_payment_scam",
+      "subcategory": "fake_payment_verification",
+      "context": "upi",
+      "language": "hinglish",
+      "region": "Maharashtra"
+    },
+
+    "input": {
+      "text": {
+        "available": true,
+        "content": "Your UPI payment is pending. Please verify your account immediately."
+      },
+
+      "url": {
+        "available": true,
+        "value": "https://example.com/verify"
+      },
+
+      "image": {
+        "available": false,
+        "description": null
+      },
+
+      "audio": {
+        "available": false,
+        "description": null
+      }
+    },
+
+    "ground_truth": {
+      "overall_label": "scam",
+      "risk_level": "high",
+
+      "modalities": {
+        "text": "malicious",
+        "url": "malicious",
+        "image": "not_present",
+        "audio": "not_present"
+      }
+    },
+
+    "expected_behavior": {
+      "should_alert": true,
+      "expected_reason_codes": [
+        "urgent_payment_request",
+        "suspicious_url"
+      ]
+    },
+
+    "qa_tags": [
+      "upi",
+      "hard_positive"
+    ]
+  },
+  {
+  "case_id": "DD-0002",
+
+  "scenario": {
+    "category": "upi_payment",
+    "subcategory": "genuine_payment_confirmation",
+    "context": "upi",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your UPI payment of Rs. 850 to ABC Store was successful. Transaction ID: 458921."
+    },
+
+    "url": {
+      "available": false,
+      "value": null
+    },
+
+    "image": {
+      "available": false,
+      "description": null
+    },
+
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+
+  "ground_truth": {
+    "overall_label": "legitimate",
+    "risk_level": "low",
+
+    "modalities": {
+      "text": "benign",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+
+  "expected_behavior": {
+    "should_alert": false,
+    "expected_reason_codes": []
+  },
+
+  "qa_tags": [
+    "upi",
+    "legitimate",
+    "false_positive_test"
+  ]
+},
+
+  {
+    "case_id": "DD-0003",
+
+    "scenario": {
+      "category": "kyc_scam",
+      "subcategory": "fake_kyc_update",
+      "context": "banking",
+      "language": "hindi",
+      "region": "Maharashtra"
+    },
+
+    "input": {
+      "text": {
+        "available": true,
+        "content": "आपका KYC अपडेट नहीं हुआ है। आपका बैंक खाता 24 घंटे में बंद हो जाएगा। KYC जारी रखने के लिए नीचे दिए गए लिंक पर क्लिक करें।"
+      },
+
+      "url": {
+        "available": true,
+        "value": "https://secure-kyc-update.example.com"
+      },
+
+      "image": {
+        "available": false,
+        "description": null
+      },
+
+      "audio": {
+        "available": false,
+        "description": null
+      }
+    },
+
+    "ground_truth": {
+      "overall_label": "scam",
+      "risk_level": "high",
+
+      "modalities": {
+        "text": "malicious",
+        "url": "malicious",
+        "image": "not_present",
+        "audio": "not_present"
+      }
+    },
+
+    "expected_behavior": {
+      "should_alert": true,
+      "expected_reason_codes": [
+        "account_threat",
+        "urgent_verification",
+        "suspicious_url",
+        "kyc_impersonation"
+      ]
+    },
+
+    "qa_tags": [
+      "kyc",
+      "bank_impersonation",
+      "hindi",
+      "hard_positive",
+      "url_phishing"
+    ]
+  },
+  {
+  "case_id": "DD-0004",
+  "scenario": {
+    "category": "banking",
+    "subcategory": "genuine_account_statement",
+    "context": "banking",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your SBI account statement for July 2026 is now available. Please log in through the official SBI YONO app to view your statement."
+    },
+    "url": {
+      "available": false,
+      "value": null
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "legitimate",
+    "risk_level": "low",
+    "modalities": {
+      "text": "benign",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": false,
+    "expected_reason_codes": []
+  },
+  "qa_tags": [
+    "banking",
+    "legitimate",
+    "false_positive_test"
+  ]
+},
+{
+  "case_id": "DD-0005",
+  "scenario": {
+    "category": "utility_scam",
+    "subcategory": "genuine_electricity_bill",
+    "context": "electricity",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your electricity bill for August 2026 is ready. You can view and download the bill from the official MSEDCL website or mobile app."
+    },
+    "url": {
+      "available": false,
+      "value": null
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "legitimate",
+    "risk_level": "low",
+    "modalities": {
+      "text": "benign",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": false,
+    "expected_reason_codes": []
+  },
+  "qa_tags": [
+    "utility",
+    "legitimate",
+    "false_positive_test"
+  ]
+},
+{
+  "case_id": "DD-0006",
+  "scenario": {
+    "category": "ecommerce",
+    "subcategory": "genuine_delivery_update",
+    "context": "online_shopping",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your Amazon order has been shipped and will be delivered by 28 August. Track your package through the official Amazon app or website."
+    },
+    "url": {
+      "available": false,
+      "value": null
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "legitimate",
+    "risk_level": "low",
+    "modalities": {
+      "text": "benign",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": false,
+    "expected_reason_codes": []
+  },
+  "qa_tags": [
+    "ecommerce",
+    "legitimate",
+    "false_positive_test"
+  ]
+},
+{
+  "case_id": "DD-0007",
+  "scenario": {
+    "category": "government_service",
+    "subcategory": "genuine_aadhaar_update",
+    "context": "government_services",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your Aadhaar update request has been successfully submitted. You can check the status through the official UIDAI website."
+    },
+    "url": {
+      "available": false,
+      "value": null
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "legitimate",
+    "risk_level": "low",
+    "modalities": {
+      "text": "benign",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": false,
+    "expected_reason_codes": []
+  },
+  "qa_tags": [
+    "government",
+    "aadhaar",
+    "legitimate",
+    "false_positive_test"
+  ]
+},
+{
+  "case_id": "DD-0008",
+  "scenario": {
+    "category": "ecommerce",
+    "subcategory": "genuine_delivery_confirmation",
+    "context": "online_shopping",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your Flipkart order has been delivered successfully. Thank you for shopping with us."
+    },
+    "url": {
+      "available": false,
+      "value": null
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "legitimate",
+    "risk_level": "low",
+    "modalities": {
+      "text": "benign",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": false,
+    "expected_reason_codes": []
+  },
+  "qa_tags": [
+    "ecommerce",
+    "legitimate",
+    "false_positive_test"
+  ]
+},
+{
+  "case_id": "DD-0009",
+  "scenario": {
+    "category": "education",
+    "subcategory": "genuine_exam_notification",
+    "context": "college",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your college has published the semester examination timetable. Please check the official college student portal for your examination dates and timings."
+    },
+    "url": {
+      "available": false,
+      "value": null
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "legitimate",
+    "risk_level": "low",
+    "modalities": {
+      "text": "benign",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": false,
+    "expected_reason_codes": []
+  },
+  "qa_tags": [
+    "education",
+    "legitimate",
+    "false_positive_test"
+  ]
+},
+{
+  "case_id": "DD-0010",
+  "scenario": {
+    "category": "upi_payment",
+    "subcategory": "genuine_payment_confirmation",
+    "context": "upi",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your UPI payment of ₹850 to a merchant was successful. Transaction reference: 458921763214."
+    },
+    "url": {
+      "available": false,
+      "value": null
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "legitimate",
+    "risk_level": "low",
+    "modalities": {
+      "text": "benign",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": false,
+    "expected_reason_codes": []
+  },
+  "qa_tags": [
+    "upi",
+    "legitimate",
+    "false_positive_test"
+  ]
+},
+{
+  "case_id": "DD-0011",
+  "scenario": {
+    "category": "kyc_scam",
+    "subcategory": "fake_bank_kyc_update",
+    "context": "banking",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "URGENT! Your SBI account will be blocked today. Verify your KYC immediately by clicking the link below and entering your PAN, Aadhaar and OTP."
+    },
+    "url": {
+      "available": true,
+      "value": "https://secure-kyc-update.example.com"
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "malicious",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "account_threat",
+      "urgent_verification",
+      "sensitive_information_request",
+      "suspicious_url"
+    ]
+  },
+  "qa_tags": [
+    "kyc",
+    "bank_impersonation",
+    "hard_positive",
+    "url_phishing"
+  ]
+},
+{
+  "case_id": "DD-0012",
+  "scenario": {
+    "category": "prize_scam",
+    "subcategory": "fake_lottery_winner",
+    "context": "financial",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Congratulations! You have won ₹25,00,000 in the KBC lucky draw. To claim your prize, pay ₹4,999 processing fees immediately and send the payment screenshot."
+    },
+    "url": {
+      "available": false,
+      "value": null
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "fake_prize",
+      "upfront_payment_request",
+      "urgency"
+    ]
+  },
+  "qa_tags": [
+    "lottery",
+    "prize_scam",
+    "financial_fraud",
+    "hard_positive"
+  ]
+},
+{
+  "case_id": "DD-0013",
+  "scenario": {
+    "category": "fastag_scam",
+    "subcategory": "fake_kyc_suspension",
+    "context": "transport",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your FASTag account has been suspended due to incomplete KYC. Update your details within 2 hours or your vehicle will be blocked. Click here to verify your bank details and OTP."
+    },
+    "url": {
+      "available": true,
+      "value": "https://fastag-kyc-verification.example.com"
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "malicious",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "account_threat",
+      "urgent_verification",
+      "sensitive_information_request",
+      "suspicious_url"
+    ]
+  },
+  "qa_tags": [
+    "fastag",
+    "kyc",
+    "url_phishing",
+    "hard_positive"
+  ]
+},
+{
+  "case_id": "DD-0014",
+  "scenario": {
+    "category": "electricity_scam",
+    "subcategory": "fake_disconnection_notice",
+    "context": "electricity",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your electricity connection will be disconnected tonight due to an unpaid bill. Pay ₹1,247 immediately through the link below to avoid disconnection. Do not ignore this message."
+    },
+    "url": {
+      "available": true,
+      "value": "https://electricity-bill-payment.example.com"
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "malicious",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "account_threat",
+      "urgent_payment_request",
+      "suspicious_url"
+    ]
+  },
+  "qa_tags": [
+    "electricity",
+    "payment_scam",
+    "urgency",
+    "url_phishing"
+  ]
+},
+{
+  "case_id": "DD-0015",
+  "scenario": {
+    "category": "upi_scam",
+    "subcategory": "fake_refund_request",
+    "context": "upi",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your bank account has received a refund of ₹18,500. To transfer the refund to your account, confirm your UPI PIN and OTP using the link below."
+    },
+    "url": {
+      "available": true,
+      "value": "https://refund-upi-verify.example.com"
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "malicious",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "fake_refund",
+      "sensitive_information_request",
+      "suspicious_url"
+    ]
+  },
+  "qa_tags": [
+    "upi",
+    "refund_scam",
+    "otp_theft",
+    "hard_positive",
+    "url_phishing"
+  ]
+},
+{
+  "case_id": "DD-0016",
+  "scenario": {
+    "category": "delivery_scam",
+    "subcategory": "fake_customs_charge",
+    "context": "ecommerce",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your parcel is held at customs because of an incomplete address. Pay ₹89 delivery verification charges within 30 minutes to avoid returning the package. Click the link to update your address."
+    },
+    "url": {
+      "available": true,
+      "value": "https://parcel-address-update.example.com"
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "malicious",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "urgent_payment_request",
+      "fake_delivery_issue",
+      "suspicious_url"
+    ]
+  },
+  "qa_tags": [
+    "delivery",
+    "customs_scam",
+    "small_payment",
+    "url_phishing"
+  ]
+},
+{
+  "case_id": "DD-0017",
+  "scenario": {
+    "category": "sim_swap_scam",
+    "subcategory": "fake_kyc_reactivation",
+    "context": "telecom",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Your mobile number will be disconnected in 24 hours because your KYC is incomplete. Call customer care on the number below and share the OTP received on your phone to reactivate the service."
+    },
+    "url": {
+      "available": false,
+      "value": null
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "not_present",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "account_threat",
+      "urgent_verification",
+      "otp_request"
+    ]
+  },
+  "qa_tags": [
+    "telecom",
+    "kyc",
+    "otp_theft",
+    "sim_swap"
+  ]
+},
+{
+  "case_id": "DD-0018",
+  "scenario": {
+    "category": "loan_scam",
+    "subcategory": "fake_instant_loan",
+    "context": "financial",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "You are eligible for an instant personal loan of ₹5,00,000. Pay ₹2,499 as a refundable verification fee to activate the loan today. Send your Aadhaar and PAN details after payment."
+    },
+    "url": {
+      "available": true,
+      "value": "https://instant-loan-approval.example.com"
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "malicious",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "fake_loan_offer",
+      "upfront_payment_request",
+      "sensitive_information_request",
+      "suspicious_url"
+    ]
+  },
+  "qa_tags": [
+    "loan_scam",
+    "financial_fraud",
+    "aadhaar",
+    "pan",
+    "url_phishing"
+  ]
+},
+{
+  "case_id": "DD-0019",
+  "scenario": {
+    "category": "wallet_scam",
+    "subcategory": "fake_kyc_expiry",
+    "context": "digital_wallet",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "URGENT: Your Paytm KYC has expired. Your wallet will be permanently blocked today. Click the link and enter your registered mobile number, card details and OTP to complete verification."
+    },
+    "url": {
+      "available": true,
+      "value": "https://paytm-kyc-update.example.com"
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "malicious",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "account_threat",
+      "urgent_verification",
+      "sensitive_information_request",
+      "suspicious_url"
+    ]
+  },
+  "qa_tags": [
+    "wallet",
+    "kyc",
+    "otp_theft",
+    "brand_impersonation",
+    "url_phishing"
+  ]
+},
+{
+  "case_id": "DD-0020",
+  "scenario": {
+    "category": "government_benefit_scam",
+    "subcategory": "fake_government_benefit",
+    "context": "government_services",
+    "language": "english",
+    "region": "Maharashtra"
+  },
+  "input": {
+    "text": {
+      "available": true,
+      "content": "Congratulations! You have been selected for a government ₹10,000 benefit. To receive the amount, pay ₹299 registration charges and provide your Aadhaar number and bank account details."
+    },
+    "url": {
+      "available": true,
+      "value": "https://government-benefit-registration.example.com"
+    },
+    "image": {
+      "available": false,
+      "description": null
+    },
+    "audio": {
+      "available": false,
+      "description": null
+    }
+  },
+  "ground_truth": {
+    "overall_label": "scam",
+    "risk_level": "high",
+    "modalities": {
+      "text": "malicious",
+      "url": "malicious",
+      "image": "not_present",
+      "audio": "not_present"
+    }
+  },
+  "expected_behavior": {
+    "should_alert": true,
+    "expected_reason_codes": [
+      "fake_government_benefit",
+      "upfront_payment_request",
+      "sensitive_information_request",
+      "suspicious_url"
+    ]
+  },
+  "qa_tags": [
+    "government",
+    "benefit_scam",
+    "aadhaar",
+    "banking",
+    "url_phishing"
+  ]
+}
+
+]
+}

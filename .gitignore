@@ -1,6 +1,6 @@
-# Python & Virtual Envs
-__pycache__/
-*.py[cod]
-.venv/
 venv/
-*.env
+frontend-dev
+*.envfrontend/node_modules/
+__pycache__/
+.DS_Store
+main
