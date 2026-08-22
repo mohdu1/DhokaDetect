@@ -1,3 +1,6 @@
 venv/
+frontend-dev
+*.envfrontend/node_modules/
 __pycache__/
 .DS_Store
+main
