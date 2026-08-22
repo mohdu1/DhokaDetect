@@ -2,57 +2,139 @@ import { useState } from "react";
 import {
   ShieldCheck,
   ArrowUpRight,
-  Upload,
-  MessageSquareText,
-  ImagePlus,
-  Sparkles,
-  Link2,
-  AlertTriangle,
-  CheckCircle2,
-  ScanFace,
+  Paperclip,
   Languages,
+  FileImage,
+  X,
 } from "lucide-react";
 
 import "./App.css";
 
 function App() {
-  const [mode, setMode] = useState("message");
-  const [message, setMessage] = useState("");
+  const [input, setInput] = useState("");
   const [file, setFile] = useState(null);
 
-  const modes = [
+  const [language, setLanguage] = useState("English");
+
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState("");
+
+  const languages = [
     {
-      id: "message",
-      icon: <MessageSquareText size={20} />,
-      title: "Scam Message",
-      description: "SMS · WhatsApp · Email",
+      value: "English",
+      label: "English",
+      explain: "Explain results in",
     },
     {
-      id: "screenshot",
-      icon: <ImagePlus size={20} />,
-      title: "Payment / Screenshot",
-      description: "Receipt · QR · Payment proof",
+      value: "Hindi",
+      label: "Hindi (हिन्दी)",
+      explain: "परिणाम समझाएँ",
     },
     {
-      id: "deepfake",
-      icon: <ScanFace size={20} />,
-      title: "Deepfake / Media",
-      description: "AI-generated · Manipulated media",
+      value: "Marathi",
+      label: "Marathi (मराठी)",
+      explain: "निकाल समजावून सांगा",
     },
   ];
 
-  const handleFile = (event) => {
-    const selected = event.target.files?.[0];
+  const selectedLanguage = languages.find(
+    (item) => item.value === language
+  );
 
-    if (selected) {
-      setFile(selected);
+  // ================= FILE UPLOAD =================
+
+  const handleFileChange = (event) => {
+    const selectedFile = event.target.files?.[0];
+
+    if (selectedFile) {
+      setFile(selectedFile);
+      setError("");
     }
+
+    // Allows selecting the same file again
+    event.target.value = "";
   };
 
-  const selectMode = (selectedMode) => {
-    setMode(selectedMode);
+  // ================= REMOVE FILE =================
+
+  const removeFile = () => {
     setFile(null);
-    setMessage("");
+  };
+
+  // ================= ANALYSE / RESULTS =================
+
+  const handleResults = async () => {
+    // Clear previous state
+    setError("");
+    setResult(null);
+
+    // Validate input
+    if (!input.trim() && !file) {
+      setError(
+        "Please paste a message or link, or upload an image/video."
+      );
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Create multipart form data
+      const formData = new FormData();
+
+      // Add text if available
+      if (input.trim()) {
+        formData.append("text", input);
+      }
+
+      // Add uploaded file if available
+      if (file) {
+        formData.append("image", file);
+      }
+
+      // Add selected language
+      formData.append("language", language);
+
+      console.log("Sending request to backend...");
+      console.log("Language:", language);
+      console.log("Text:", input);
+      console.log("File:", file);
+
+      // Send request to FastAPI
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/v1/analyze",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      // Check HTTP status
+      if (!response.ok) {
+        throw new Error(
+          `Backend returned status ${response.status}`
+        );
+      }
+
+      // Convert response to JSON
+      const data = await response.json();
+
+      console.log("Backend response:", data);
+
+      // Store backend result
+      setResult(data);
+
+    } catch (err) {
+      console.error("Analysis error:", err);
+
+      setError(
+        "Unable to analyse the content. Please make sure the backend is running."
+      );
+
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,472 +142,407 @@ function App() {
 
       {/* ================= NAVBAR ================= */}
 
-      <nav className="navbar">
+      <header className="navbar">
 
-        <div className="brand">
-          <div className="brand-icon">
-            <ShieldCheck size={22} />
-          </div>
+        <div className="nav-container">
 
-          <div>
-            <div className="brand-name">
-              Dhoka<span>Detect</span>
+          {/* BRAND */}
+
+          <a href="/" className="brand">
+
+            <div className="brand-icon">
+              <ShieldCheck
+                size={25}
+                strokeWidth={2.2}
+              />
             </div>
 
-            <div className="brand-subtitle">
-              DIGITAL SAFETY
+            <div className="brand-text">
+
+              <div className="brand-name">
+                Dhoka<span>Detect</span>
+              </div>
+
+              <div className="brand-tagline">
+                DIGITAL SAFETY
+              </div>
+
             </div>
-          </div>
+
+          </a>
+
+
+          {/* NAVIGATION */}
+
+          <nav className="nav-links">
+
+            <a
+              href="#how-it-works"
+              className="how-link"
+            >
+              How it works
+            </a>
+
+            <a
+              href="#check"
+              className="protect-button"
+            >
+              Get Protected
+              <ArrowUpRight size={17} />
+            </a>
+
+          </nav>
+
         </div>
 
-        <div className="nav-links">
-          <a href="#analyse">Analyse</a>
-          <a href="#how">How it works</a>
-          <a href="#about">About</a>
-        </div>
-
-        <button className="nav-button">
-          Get Protected
-          <ArrowUpRight size={16} />
-        </button>
-
-      </nav>
+      </header>
 
 
-      {/* ================= HERO ================= */}
+      {/* ================= MAIN ================= */}
 
       <main>
+
+        {/* ================= HERO ================= */}
 
         <section className="hero">
 
           <div className="hero-content">
 
             <div className="eyebrow">
+
               <span className="eyebrow-dot"></span>
+
               AI-POWERED DIGITAL SAFETY
+
             </div>
+
 
             <h1>
+
               Don't get fooled.
+
               <br />
-              <span>Know the Dhoka.</span>
-            </h1>
-
-            <p className="hero-description">
-              Suspicious message? Payment request? Fake QR?
-              Manipulated media? Understand the risk before
-              you take the next step.
-            </p>
-
-            <div className="hero-actions">
-
-              <a href="#analyse" className="primary-button">
-                Analyse something
-                <ArrowUpRight size={18} />
-              </a>
-
-              <a href="#how" className="secondary-button">
-                How it works
-              </a>
-
-            </div>
-
-            <div className="trust-line">
-
-              <div className="trust-icons">
-                <div>AI</div>
-                <div>✓</div>
-                <div>भा</div>
-              </div>
 
               <span>
-                Explainable · Multimodal · Regional
+                Know the Dhoka.
               </span>
 
-            </div>
-
-          </div>
+            </h1>
 
 
-          {/* HERO VISUAL */}
+            <p className="hero-description">
 
-          <div className="hero-visual">
+              Paste a message or link, or upload a photo or video.
 
-            <div className="visual-glow"></div>
+              <br />
 
-            <div className="analysis-card">
+              We'll help you understand what's suspicious.
 
-              <div className="card-top">
-
-                <div className="card-label">
-                  <Sparkles size={15} />
-                  MULTIMODAL AI
-                </div>
-
-                <div className="live">
-                  <span></span>
-                  READY
-                </div>
-
-              </div>
-
-
-              <div className="media-preview">
-
-                <div className="media-preview-icon">
-                  <ScanFace size={27} />
-                </div>
-
-                <div>
-                  <small>MEDIA AUTHENTICITY</small>
-
-                  <p>
-                    Checking for AI-generation
-                    and manipulation indicators...
-                  </p>
-                </div>
-
-              </div>
-
-
-              <div className="risk-preview">
-
-                <div>
-                  <small>INITIAL ASSESSMENT</small>
-
-                  <strong>
-                    Review Required
-                  </strong>
-                </div>
-
-                <div className="risk-score">
-                  ?
-                </div>
-
-              </div>
-
-
-              <div className="progress">
-                <div></div>
-              </div>
-
-
-              <div className="signal-list">
-
-                <div>
-                  <ScanFace size={16} />
-                  Face / media signals
-                </div>
-
-                <div>
-                  <Sparkles size={16} />
-                  AI-generation indicators
-                </div>
-
-                <div>
-                  <CheckCircle2 size={16} />
-                  Explainable result
-                </div>
-
-              </div>
-
-            </div>
-
-
-            {/* FLOATING CARDS */}
-
-            <div className="floating-card floating-one">
-
-              <AlertTriangle size={17} />
-
-              <div>
-                <strong>Suspicious signal</strong>
-                <span>Needs verification</span>
-              </div>
-
-            </div>
-
-
-            <div className="floating-card floating-two">
-
-              <ScanFace size={17} />
-
-              <div>
-                <strong>Media analysis</strong>
-                <span>AI indicators</span>
-              </div>
-
-            </div>
-
-
-            <div className="floating-card floating-three">
-
-              <ShieldCheck size={18} />
-
-              <div>
-                <strong>Stay protected</strong>
-                <span>Verify officially</span>
-              </div>
-
-            </div>
+            </p>
 
           </div>
 
         </section>
 
 
-        {/* ================= ANALYSIS ================= */}
+        {/* ================= UNIVERSAL INPUT ================= */}
 
-        <section id="analyse" className="analyse-section">
+        <section
+          className="analysis-section"
+          id="check"
+        >
 
-          <div className="section-heading">
+          <div className="analysis-container">
 
-            <div>
+            {/* HEADING */}
 
-              <div className="section-number">
-                01 — ANALYSE
-              </div>
+            <div className="analysis-heading">
+
+              <span className="small-label">
+                CHECK SOMETHING SUSPICIOUS
+              </span>
 
               <h2>
-                Something feels off?
+
+                Give us anything
+
                 <br />
-                <span>Let's check.</span>
+
+                <span>
+                  that feels wrong.
+                </span>
+
               </h2>
+
+              <p>
+
+                You don't need to know what type of scam it is.
+                Just paste it or upload it — DhokaDetect will
+                figure out what to check.
+
+              </p>
 
             </div>
 
-            <p>
-              Choose what you want to analyse. DhokaDetect
-              can work with suspicious messages, payment
-              screenshots and potentially manipulated media.
-            </p>
 
-          </div>
+            {/* ================= LANGUAGE ================= */}
 
+            <div className="language-row">
 
-          {/* ANALYSIS MODES */}
+              <div className="language-label">
 
-          <div className="mode-grid">
+                <Languages size={18} />
 
-            {modes.map((item) => (
-
-              <button
-                key={item.id}
-                className={`mode-card ${
-                  mode === item.id ? "active" : ""
-                }`}
-                onClick={() => selectMode(item.id)}
-              >
-
-                <div
-                  className={`mode-icon ${
-                    item.id === "deepfake"
-                      ? "deepfake-icon"
-                      : item.id === "screenshot"
-                      ? "gold"
-                      : "teal"
-                  }`}
-                >
-                  {item.icon}
-                </div>
-
-                <div className="mode-text">
-                  <strong>{item.title}</strong>
-                  <span>{item.description}</span>
-                </div>
-
-                {mode === item.id && (
-                  <div className="selected-dot">
-                    ✓
-                  </div>
-                )}
-
-              </button>
-
-            ))}
-
-          </div>
-
-
-          {/* MESSAGE MODE */}
-
-          {mode === "message" && (
-
-            <div className="input-card">
-
-              <div className="input-card-heading">
-
-                <div className="input-icon teal">
-                  <MessageSquareText size={20} />
-                </div>
-
-                <div>
-                  <h3>Paste a suspicious message</h3>
-                  <span>
-                    SMS · WhatsApp · Email · Payment request
-                  </span>
-                </div>
+                <span>
+                  {selectedLanguage.explain}
+                </span>
 
               </div>
 
 
+              <div className="language-select-wrapper">
+
+                <select
+                  value={language}
+                  onChange={(event) =>
+                    setLanguage(event.target.value)
+                  }
+                  className="language-select"
+                  disabled={loading}
+                >
+
+                  <option value="English">
+                    English
+                  </option>
+
+                  <option value="Hindi">
+                    Hindi (हिन्दी)
+                  </option>
+
+                  <option value="Marathi">
+                    Marathi (मराठी)
+                  </option>
+
+                </select>
+
+
+                <span className="select-arrow">
+                  ▾
+                </span>
+
+              </div>
+
+            </div>
+
+
+            {/* ================= INPUT BOX ================= */}
+
+            <div className="universal-input">
+
               <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Paste the suspicious message here..."
+                value={input}
+                onChange={(event) => {
+                  setInput(event.target.value);
+                  setError("");
+                }}
+                placeholder="Paste a suspicious message or link here..."
+                className="message-input"
+                disabled={loading}
               />
+
+
+              {/* ================= FILE ================= */}
+
+              {file && (
+
+                <div className="uploaded-file">
+
+                  <div className="file-info">
+
+                    <div className="file-icon">
+
+                      <FileImage size={20} />
+
+                    </div>
+
+
+                    <div>
+
+                      <strong>
+                        {file.name}
+                      </strong>
+
+                      <span>
+
+                        {(
+                          file.size /
+                          (1024 * 1024)
+                        ).toFixed(2)}{" "}
+                        MB
+
+                      </span>
+
+                    </div>
+
+                  </div>
+
+
+                  <button
+                    className="remove-file"
+                    onClick={removeFile}
+                    type="button"
+                    disabled={loading}
+                  >
+
+                    <X size={18} />
+
+                  </button>
+
+                </div>
+
+              )}
+
+
+              {/* ================= INPUT FOOTER ================= */}
 
               <div className="input-footer">
 
-                <span>
-                  {message.length} characters
-                </span>
+                <label
+                  htmlFor="file-upload"
+                  className="upload-button"
+                >
 
-                {message && (
-                  <button onClick={() => setMessage("")}>
-                    Clear
-                  </button>
-                )}
-
-              </div>
-
-            </div>
-
-          )}
-
-
-          {/* SCREENSHOT MODE */}
-
-          {mode === "screenshot" && (
-
-            <div className="input-card">
-
-              <div className="input-card-heading">
-
-                <div className="input-icon gold">
-                  <ImagePlus size={20} />
-                </div>
-
-                <div>
-                  <h3>Upload payment evidence</h3>
-                  <span>
-                    Receipt · QR code · Payment screenshot
-                  </span>
-                </div>
-
-              </div>
-
-
-              <label className="upload-area">
-
-                <div className="upload-icon">
-                  <Upload size={24} />
-                </div>
-
-                <strong>
-                  {file
-                    ? file.name
-                    : "Drop or choose a screenshot"}
-                </strong>
-
-                <span>
-                  PNG, JPG or JPEG
-                </span>
-
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg"
-                  onChange={handleFile}
-                />
-
-              </label>
-
-            </div>
-
-          )}
-
-
-          {/* DEEPFAKE MODE */}
-
-          {mode === "deepfake" && (
-
-            <div className="input-card deepfake-card">
-
-              <div className="input-card-heading">
-
-                <div className="input-icon deepfake">
-                  <ScanFace size={20} />
-                </div>
-
-                <div>
-                  <h3>Check media authenticity</h3>
+                  <Paperclip size={18} />
 
                   <span>
-                    AI-generated · Face manipulation · Synthetic media
+                    Upload photo / video
                   </span>
-                </div>
 
-              </div>
+                </label>
 
-
-              <label className="upload-area deepfake-upload">
-
-                <div className="upload-icon deepfake-upload-icon">
-                  <ScanFace size={25} />
-                </div>
-
-                <strong>
-                  {file
-                    ? file.name
-                    : "Upload an image or media file"}
-                </strong>
-
-                <span>
-                  Look for potential AI-generation and manipulation indicators
-                </span>
 
                 <input
+                  id="file-upload"
                   type="file"
-                  accept="image/png,image/jpeg,image/jpg,video/mp4,video/webm"
-                  onChange={handleFile}
+                  accept="image/*,video/*"
+                  onChange={handleFileChange}
+                  hidden
+                  disabled={loading}
                 />
 
-              </label>
 
+                <span className="input-hint">
 
-              <div className="deepfake-note">
+                  JPG · PNG · JPEG · MP4
 
-                <Sparkles size={15} />
-
-                <span>
-                  DhokaDetect analyses media for potential
-                  manipulation indicators. Results are not
-                  treated as absolute proof of authenticity.
                 </span>
 
               </div>
 
             </div>
 
-          )}
+
+            {/* ================= ERROR ================= */}
+
+            {error && (
+
+              <div className="error-message">
+
+                {error}
+
+              </div>
+
+            )}
 
 
-          {/* ANALYSE BUTTON */}
+            {/* ================= RESULTS BUTTON ================= */}
 
-          <div className="analyse-button-wrapper">
+            <button
+              className="results-button"
+              onClick={handleResults}
+              type="button"
+              disabled={loading}
+            >
 
-            <button className="analyse-button">
+              {loading ? (
 
-              Analyse Risk
+                <>
+                  <span className="spinner"></span>
 
-              <ArrowUpRight size={19} />
+                  <span>
+                    Checking...
+                  </span>
+                </>
+
+              ) : (
+
+                <>
+                  <span>
+
+                    {language === "Hindi"
+                      ? "परिणाम"
+                      : language === "Marathi"
+                      ? "निकाल"
+                      : "Results"}
+
+                  </span>
+
+                  <ArrowUpRight size={20} />
+
+                </>
+
+              )}
 
             </button>
 
-            <span>
-              Your content is analysed for suspicious patterns
-              and risk indicators.
-            </span>
+
+            {/* ================= LOADING MESSAGE ================= */}
+
+            {loading && (
+
+              <p className="privacy-note">
+
+                Checking your content for suspicious
+                patterns...
+
+              </p>
+
+            )}
+
+
+            {/* ================= BACKEND RESULT ================= */}
+
+            {result && !loading && (
+
+              <div className="result-box">
+
+                <h3>
+                  Analysis Result
+                </h3>
+
+                <pre>
+                  {JSON.stringify(
+                    result,
+                    null,
+                    2
+                  )}
+                </pre>
+
+              </div>
+
+            )}
+
+
+            {!result && !loading && !error && (
+
+              <p className="privacy-note">
+
+                Your content is checked for suspicious
+                patterns, links and manipulation indicators.
+
+              </p>
+
+            )}
 
           </div>
 
@@ -534,35 +551,90 @@ function App() {
 
         {/* ================= HOW IT WORKS ================= */}
 
-        <section id="how" className="features-section">
+        <section
+          className="how-it-works"
+          id="how-it-works"
+        >
 
-          <div className="section-number">
-            02 — WHY DHOKADETECT
-          </div>
+          <div className="how-container">
+
+            <div className="how-header">
+
+              <span className="small-label">
+                HOW IT WORKS
+              </span>
+
+              <h2>
+
+                Simple enough
+
+                <br />
+
+                <span>
+                  for everyone.
+                </span>
+
+              </h2>
+
+            </div>
 
 
-          <div className="feature-grid">
+            <div className="steps">
 
-            <Feature
-              number="01"
-              title="Explainable AI"
-              icon={<Sparkles size={20} />}
-              text="Not just a warning. Understand exactly why something looks suspicious."
-            />
+              <div className="step">
 
-            <Feature
-              number="02"
-              title="Multimodal"
-              icon={<ScanFace size={20} />}
-              text="Analyse messages, payment screenshots and potentially manipulated media."
-            />
+                <div className="step-number">
+                  01
+                </div>
 
-            <Feature
-              number="03"
-              title="Regional"
-              icon={<Languages size={20} />}
-              text="Get clear explanations designed for users beyond technical English."
-            />
+                <h3>
+                  Give us the suspicious content.
+                </h3>
+
+                <p>
+                  Paste a message or link, or upload
+                  an image or video.
+                </p>
+
+              </div>
+
+
+              <div className="step">
+
+                <div className="step-number">
+                  02
+                </div>
+
+                <h3>
+                  We check the warning signs.
+                </h3>
+
+                <p>
+                  DhokaDetect looks for suspicious
+                  patterns and manipulation indicators.
+                </p>
+
+              </div>
+
+
+              <div className="step">
+
+                <div className="step-number">
+                  03
+                </div>
+
+                <h3>
+                  Understand before you act.
+                </h3>
+
+                <p>
+                  Get a simple explanation and a safer
+                  next step in your chosen language.
+                </p>
+
+              </div>
+
+            </div>
 
           </div>
 
@@ -573,22 +645,18 @@ function App() {
 
       {/* ================= FOOTER ================= */}
 
-      <footer id="about">
+      <footer className="footer">
 
         <div className="footer-brand">
 
-          <ShieldCheck size={20} />
+          <ShieldCheck size={18} />
 
           DhokaDetect
 
         </div>
 
         <span>
-          Detect · Explain · Educate · Protect
-        </span>
-
-        <span>
-          Prototype · 2026
+          Detect · Explain · Protect.
         </span>
 
       </footer>
@@ -596,39 +664,5 @@ function App() {
     </div>
   );
 }
-
-
-function Feature({ number, title, icon, text }) {
-
-  return (
-
-    <div className="feature">
-
-      <div className="feature-number">
-        {number}
-      </div>
-
-      <div className="feature-icon">
-        {icon}
-      </div>
-
-      <h3>
-        {title}
-      </h3>
-
-      <p>
-        {text}
-      </p>
-
-      <ArrowUpRight
-        className="feature-arrow"
-        size={20}
-      />
-
-    </div>
-
-  );
-}
-
 
 export default App;
