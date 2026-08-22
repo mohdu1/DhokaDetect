@@ -1,12 +1,22 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional
 import traceback
 
-from model_manager import LocalScamDetector
-from fusion_engine import FusionEngine, ModalityScore
+from ml_services.model_manager import LocalScamDetector
+from ml_services.fusion_engine import FusionEngine, ModalityScore
 
 app = FastAPI(title="DhokaDetect Multi-Modal Late-Fusion API", version="2.0")
+
+# --- CORS MIDDLEWARE: Critical for Yug's Frontend Connection ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Allows localhost connections from React/Vite
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 print("Initializing Local ML Engine...")
 text_detector = LocalScamDetector()
@@ -22,8 +32,9 @@ class MultimodalAnalysisRequest(BaseModel):
 def root():
     return {"status": "online", "service": "DhokaDetect Multi-Modal API"}
 
-@app.post("/api/v2/analyze/multimodal")
-async def analyze_multimodal(request: MultimodalAnalysisRequest):
+# Changed to v1 so Yug's current React code hits the correct endpoint
+@app.post("/api/v1/analyze")
+async def analyze_payload(request: MultimodalAnalysisRequest):
     try:
         text_modality = None
         
