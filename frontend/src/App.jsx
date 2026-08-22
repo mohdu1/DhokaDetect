@@ -6,6 +6,13 @@ import {
   Languages,
   FileImage,
   X,
+  AlertTriangle,
+  CheckCircle2,
+  MessageSquareText,
+  Link2,
+  Image,
+  Volume2,
+  RotateCcw,
 } from "lucide-react";
 
 import "./App.css";
@@ -13,9 +20,7 @@ import "./App.css";
 function App() {
   const [input, setInput] = useState("");
   const [file, setFile] = useState(null);
-
   const [language, setLanguage] = useState("English");
-
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -23,17 +28,14 @@ function App() {
   const languages = [
     {
       value: "English",
-      label: "English",
       explain: "Explain results in",
     },
     {
       value: "Hindi",
-      label: "Hindi (हिन्दी)",
       explain: "परिणाम समझाएँ",
     },
     {
       value: "Marathi",
-      label: "Marathi (मराठी)",
       explain: "निकाल समजावून सांगा",
     },
   ];
@@ -42,7 +44,9 @@ function App() {
     (item) => item.value === language
   );
 
-  // ================= FILE UPLOAD =================
+  /* =========================
+     FILE UPLOAD
+  ========================= */
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files?.[0];
@@ -52,24 +56,21 @@ function App() {
       setError("");
     }
 
-    // Allows selecting the same file again
     event.target.value = "";
   };
-
-  // ================= REMOVE FILE =================
 
   const removeFile = () => {
     setFile(null);
   };
 
-  // ================= ANALYSE / RESULTS =================
+  /* =========================
+     ANALYSE
+  ========================= */
 
   const handleResults = async () => {
-    // Clear previous state
     setError("");
     setResult(null);
 
-    // Validate input
     if (!input.trim() && !file) {
       setError(
         "Please paste a message or link, or upload an image/video."
@@ -80,61 +81,150 @@ function App() {
     setLoading(true);
 
     try {
-      // Create multipart form data
-      const formData = new FormData();
-
-      // Add text if available
-      if (input.trim()) {
-        formData.append("text", input);
-      }
-
-      // Add uploaded file if available
-      if (file) {
-        formData.append("image", file);
-      }
-
-      // Add selected language
-      formData.append("language", language);
-
-      console.log("Sending request to backend...");
-      console.log("Language:", language);
-      console.log("Text:", input);
-      console.log("File:", file);
-
-      // Send request to FastAPI
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/v1/analyze",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      // Check HTTP status
+     const response = await fetch(
+  "https://f199e2ac4ca25a.lhr.life/api/v1/analyze",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text_input: input.trim(),
+      url_confidence: null,
+      image_confidence: null,
+      audio_confidence: null,
+    }),
+  }
+);
       if (!response.ok) {
         throw new Error(
           `Backend returned status ${response.status}`
         );
       }
 
-      // Convert response to JSON
       const data = await response.json();
 
       console.log("Backend response:", data);
 
-      // Store backend result
       setResult(data);
-
     } catch (err) {
       console.error("Analysis error:", err);
 
       setError(
-        "Unable to analyse the content. Please make sure the backend is running."
+        "Unable to analyse the content. Please check the backend connection."
       );
-
     } finally {
       setLoading(false);
     }
+  };
+
+  /* =========================
+     NEW ANALYSIS
+  ========================= */
+
+  const handleNewAnalysis = () => {
+    setResult(null);
+    setError("");
+    setInput("");
+    setFile(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  };
+
+  /* =========================
+     RISK HELPERS
+  ========================= */
+
+  const getRiskInfo = (score, level) => {
+    const numericScore = Number(score || 0);
+
+    const percentage = Math.max(
+      0,
+      Math.min(100, numericScore * 100)
+    );
+
+    const normalizedLevel =
+      String(level || "").toUpperCase();
+
+    if (
+      normalizedLevel.includes("HIGH") ||
+      percentage >= 70
+    ) {
+      return {
+        className: "high",
+        label: "HIGH RISK",
+        percentage,
+        message:
+          "This content shows strong signs of suspicious or scam-like behaviour.",
+      };
+    }
+
+    if (
+      normalizedLevel.includes("MEDIUM") ||
+      normalizedLevel.includes("MODERATE") ||
+      percentage >= 40
+    ) {
+      return {
+        className: "medium",
+        label: "MEDIUM RISK",
+        percentage,
+        message:
+          "This content contains some warning signs. Proceed carefully.",
+      };
+    }
+
+    return {
+      className: "low",
+      label: "LOW RISK",
+      percentage,
+      message:
+        "No major warning signs were detected in this content.",
+    };
+  };
+
+  /* =========================
+     CHANNEL ICON
+  ========================= */
+
+  const getChannelIcon = (channel) => {
+    const value = String(channel).toLowerCase();
+
+    if (value.includes("text")) {
+      return <MessageSquareText size={15} />;
+    }
+
+    if (
+      value.includes("url") ||
+      value.includes("link")
+    ) {
+      return <Link2 size={15} />;
+    }
+
+    if (value.includes("image")) {
+      return <Image size={15} />;
+    }
+
+    if (value.includes("audio")) {
+      return <Volume2 size={15} />;
+    }
+
+    return <MessageSquareText size={15} />;
+  };
+
+  const getChannelName = (channel) => {
+    const value = String(channel).toLowerCase();
+
+    if (value.includes("text")) return "TEXT";
+    if (value.includes("url") || value.includes("link")) {
+      return "LINK";
+    }
+    if (value.includes("image")) return "IMAGE";
+    if (value.includes("audio")) return "AUDIO";
+
+    return String(channel).toUpperCase();
   };
 
   return (
@@ -143,10 +233,7 @@ function App() {
       {/* ================= NAVBAR ================= */}
 
       <header className="navbar">
-
         <div className="nav-container">
-
-          {/* BRAND */}
 
           <a href="/" className="brand">
 
@@ -171,9 +258,6 @@ function App() {
 
           </a>
 
-
-          {/* NAVIGATION */}
-
           <nav className="nav-links">
 
             <a
@@ -194,19 +278,20 @@ function App() {
           </nav>
 
         </div>
-
       </header>
 
 
-      {/* ================= MAIN ================= */}
-
       <main>
 
-        {/* ================= HERO ================= */}
+        {/* ================= MINIMAL HERO ================= */}
 
         <section className="hero">
 
           <div className="hero-content">
+
+            <h1>
+              Don't get fooled.
+            </h1>
 
             <div className="eyebrow">
 
@@ -216,28 +301,10 @@ function App() {
 
             </div>
 
-
-            <h1>
-
-              Don't get fooled.
-
-              <br />
-
-              <span>
-                Know the Dhoka.
-              </span>
-
-            </h1>
-
-
             <p className="hero-description">
-
               Paste a message or link, or upload a photo or video.
-
               <br />
-
               We'll help you understand what's suspicious.
-
             </p>
 
           </div>
@@ -245,7 +312,7 @@ function App() {
         </section>
 
 
-        {/* ================= UNIVERSAL INPUT ================= */}
+        {/* ================= INPUT SECTION ================= */}
 
         <section
           className="analysis-section"
@@ -254,38 +321,7 @@ function App() {
 
           <div className="analysis-container">
 
-            {/* HEADING */}
-
-            <div className="analysis-heading">
-
-              <span className="small-label">
-                CHECK SOMETHING SUSPICIOUS
-              </span>
-
-              <h2>
-
-                Give us anything
-
-                <br />
-
-                <span>
-                  that feels wrong.
-                </span>
-
-              </h2>
-
-              <p>
-
-                You don't need to know what type of scam it is.
-                Just paste it or upload it — DhokaDetect will
-                figure out what to check.
-
-              </p>
-
-            </div>
-
-
-            {/* ================= LANGUAGE ================= */}
+            {/* LANGUAGE */}
 
             <div className="language-row">
 
@@ -298,7 +334,6 @@ function App() {
                 </span>
 
               </div>
-
 
               <div className="language-select-wrapper">
 
@@ -325,7 +360,6 @@ function App() {
 
                 </select>
 
-
                 <span className="select-arrow">
                   ▾
                 </span>
@@ -335,7 +369,7 @@ function App() {
             </div>
 
 
-            {/* ================= INPUT BOX ================= */}
+            {/* INPUT */}
 
             <div className="universal-input">
 
@@ -350,21 +384,14 @@ function App() {
                 disabled={loading}
               />
 
-
-              {/* ================= FILE ================= */}
-
               {file && (
-
                 <div className="uploaded-file">
 
                   <div className="file-info">
 
                     <div className="file-icon">
-
                       <FileImage size={20} />
-
                     </div>
-
 
                     <div>
 
@@ -373,19 +400,12 @@ function App() {
                       </strong>
 
                       <span>
-
-                        {(
-                          file.size /
-                          (1024 * 1024)
-                        ).toFixed(2)}{" "}
-                        MB
-
+                        {(file.size / (1024 * 1024)).toFixed(2)} MB
                       </span>
 
                     </div>
 
                   </div>
-
 
                   <button
                     className="remove-file"
@@ -393,17 +413,11 @@ function App() {
                     type="button"
                     disabled={loading}
                   >
-
                     <X size={18} />
-
                   </button>
 
                 </div>
-
               )}
-
-
-              {/* ================= INPUT FOOTER ================= */}
 
               <div className="input-footer">
 
@@ -420,7 +434,6 @@ function App() {
 
                 </label>
 
-
                 <input
                   id="file-upload"
                   type="file"
@@ -430,11 +443,8 @@ function App() {
                   disabled={loading}
                 />
 
-
                 <span className="input-hint">
-
                   JPG · PNG · JPEG · MP4
-
                 </span>
 
               </div>
@@ -442,20 +452,16 @@ function App() {
             </div>
 
 
-            {/* ================= ERROR ================= */}
+            {/* ERROR */}
 
             {error && (
-
               <div className="error-message">
-
                 {error}
-
               </div>
-
             )}
 
 
-            {/* ================= RESULTS BUTTON ================= */}
+            {/* ANALYSE BUTTON */}
 
             <button
               className="results-button"
@@ -465,84 +471,316 @@ function App() {
             >
 
               {loading ? (
-
                 <>
                   <span className="spinner"></span>
-
-                  <span>
-                    Checking...
-                  </span>
+                  <span>Checking...</span>
                 </>
-
               ) : (
-
                 <>
                   <span>
-
                     {language === "Hindi"
                       ? "परिणाम"
                       : language === "Marathi"
                       ? "निकाल"
                       : "Results"}
-
                   </span>
 
                   <ArrowUpRight size={20} />
-
                 </>
-
               )}
 
             </button>
 
 
-            {/* ================= LOADING MESSAGE ================= */}
+            {/* =========================
+                RESULT SHOWCASE
+            ========================= */}
 
-            {loading && (
+            {result &&
+              !loading &&
+              (() => {
 
-              <p className="privacy-note">
+                const risk = getRiskInfo(
+                  result.final_risk_score,
+                  result.risk_level
+                );
 
-                Checking your content for suspicious
-                patterns...
+                const flags =
+                  result.aggregated_red_flags || [];
 
-              </p>
+                const channels =
+                  result.active_channels || [];
 
-            )}
+                return (
+
+                  <section
+                    className={`result-showcase ${risk.className}`}
+                  >
+
+                    {/* RESULT HEADER */}
+
+                    <div className="result-top">
+
+                      <div>
+
+                        <span className="result-kicker">
+                          ANALYSIS COMPLETE
+                        </span>
+
+                        <h2>
+                          Here's what we found.
+                        </h2>
+
+                      </div>
+
+                      <div className="result-check">
+                        <CheckCircle2 size={21} />
+                      </div>
+
+                    </div>
 
 
-            {/* ================= BACKEND RESULT ================= */}
+                    {/* RISK CARD */}
 
-            {result && !loading && (
+                    <div className="risk-card">
 
-              <div className="result-box">
+                      <div className="risk-card-left">
 
-                <h3>
-                  Analysis Result
-                </h3>
+                        <div className="risk-label">
+                          RISK LEVEL
+                        </div>
 
-                <pre>
-                  {JSON.stringify(
-                    result,
-                    null,
-                    2
-                  )}
-                </pre>
+                        <div className="risk-badge">
 
-              </div>
+                          <AlertTriangle size={17} />
 
-            )}
+                          {risk.label}
+
+                        </div>
+
+                        <p className="risk-message">
+                          {risk.message}
+                        </p>
+
+                      </div>
 
 
-            {!result && !loading && !error && (
+                      <div className="risk-score">
 
-              <p className="privacy-note">
+                        <div className="score-number">
 
-                Your content is checked for suspicious
-                patterns, links and manipulation indicators.
+                          {risk.percentage.toFixed(1)}
 
-              </p>
+                          <span>
+                            %
+                          </span>
 
-            )}
+                        </div>
+
+                        <div className="score-label">
+                          risk score
+                        </div>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* PROGRESS BAR */}
+
+                    <div className="risk-progress">
+
+                      <div className="progress-header">
+
+                        <span>
+                          Overall risk
+                        </span>
+
+                        <strong>
+                          {risk.percentage.toFixed(1)}%
+                        </strong>
+
+                      </div>
+
+                      <div className="progress-track">
+
+                        <div
+                          className="progress-fill"
+                          style={{
+                            width: `${risk.percentage}%`,
+                          }}
+                        ></div>
+
+                      </div>
+
+                    </div>
+
+
+                    {/* RED FLAGS */}
+
+                    <div className="result-section">
+
+                      <div className="result-section-heading">
+
+                        <div>
+
+                          <span>
+                            WARNING SIGNS
+                          </span>
+
+                          <h3>
+                            Red flags detected
+                          </h3>
+
+                        </div>
+
+                        <div className="flag-count">
+                          {flags.length}
+                        </div>
+
+                      </div>
+
+
+                      {flags.length > 0 ? (
+
+                        <div className="flag-list">
+
+                          {flags.map(
+                            (flag, index) => (
+
+                              <div
+                                className="flag-card"
+                                key={index}
+                              >
+
+                                <div className="flag-icon">
+
+                                  <AlertTriangle
+                                    size={20}
+                                  />
+
+                                </div>
+
+                                <div className="flag-content">
+
+                                  <strong>
+                                    {flag}
+                                  </strong>
+
+                                  <span>
+                                    This is a warning sign
+                                    that deserves attention.
+                                  </span>
+
+                                </div>
+
+                              </div>
+
+                            )
+                          )}
+
+                        </div>
+
+                      ) : (
+
+                        <div className="no-flags">
+
+                          <CheckCircle2 size={20} />
+
+                          <span>
+                            No specific red flags were
+                            identified.
+                          </span>
+
+                        </div>
+
+                      )}
+
+                    </div>
+
+
+                    {/* ACTIVE CHANNELS */}
+
+                    {channels.length > 0 && (
+
+                      <div className="result-section channel-section">
+
+                        <div className="result-section-heading">
+
+                          <div>
+
+                            <span>
+                              ANALYSED THROUGH
+                            </span>
+
+                            <h3>
+                              Active channels
+                            </h3>
+
+                          </div>
+
+                        </div>
+
+
+                        <div className="channel-list">
+
+                          {channels.map(
+                            (channel, index) => (
+
+                              <div
+                                className="channel-chip"
+                                key={index}
+                              >
+
+                                {getChannelIcon(channel)}
+
+                                {getChannelName(channel)}
+
+                              </div>
+
+                            )
+                          )}
+
+                        </div>
+
+                      </div>
+
+                    )}
+
+
+                    {/* BOTTOM ACTION */}
+
+                    <div className="result-bottom">
+
+                      <div className="result-tip">
+
+                        <ShieldCheck size={19} />
+
+                        <span>
+                          Think twice before taking
+                          action on suspicious content.
+                        </span>
+
+                      </div>
+
+                      <button
+                        className="new-analysis-button"
+                        onClick={handleNewAnalysis}
+                      >
+
+                        <RotateCcw size={17} />
+
+                        Analyse another
+
+                      </button>
+
+                    </div>
+
+                  </section>
+
+                );
+
+              })()}
 
           </div>
 
@@ -565,19 +803,12 @@ function App() {
               </span>
 
               <h2>
-
                 Simple enough
-
                 <br />
-
-                <span>
-                  for everyone.
-                </span>
-
+                <span>for everyone.</span>
               </h2>
 
             </div>
-
 
             <div className="steps">
 
@@ -598,7 +829,6 @@ function App() {
 
               </div>
 
-
               <div className="step">
 
                 <div className="step-number">
@@ -615,7 +845,6 @@ function App() {
                 </p>
 
               </div>
-
 
               <div className="step">
 
