@@ -1,54 +1,66 @@
 import os
 import shutil
-import torch
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
-from preprocessing import MultimodalPreprocessor
-from model_engine import FraudDetector
+import uvicorn
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from vision_service import VisionService
 
-app = FastAPI(title="DhokaDetect Vision Microservice")
+app = FastAPI(
+    title="DhokaDetect - Vision ML Microservice",
+    description="Dual-Engine Vision API for UPI Payment Forgery and Deepfake Detection",
+    version="2.0.0"
+)
 
-preprocessor = MultimodalPreprocessor()
-detector = FraudDetector()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-os.makedirs("temp_uploads", exist_ok=True)
+UPLOAD_DIR = "temp_uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+print("Initializing Vision Service...")
+vision_service = VisionService()
+
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "service": "DhokaDetect Vision Microservice",
+        "supported_tasks": ["payment", "deepfake"]
+    }
 
 @app.post("/detect-media")
-async def detect_media(file: UploadFile = File(...)):
-    temp_path = f"temp_uploads/{file.filename}"
-    
+async def detect_media(
+    file: UploadFile = File(...), 
+    task: str = Form("payment")
+):
+    if task not in ["payment", "deepfake"]:
+        raise HTTPException(
+            status_code=400, 
+            detail="Invalid task specified. Must be 'payment' or 'deepfake'."
+        )
+
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
     try:
-        with open(temp_path, "wb") as buffer:
+        with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-
-        ext = file.filename.split(".")[-1].lower()
+            
+        result = vision_service.detect_and_explain(file_path, task=task)
+        result["filename"] = file.filename
         
-        if ext in ["jpg", "jpeg", "png"]:
-            modality = "image"
-            tensor = preprocessor.process_image(temp_path)
-            score = detector.predict_image(tensor)
-        elif ext in ["mp4", "avi", "mov", "webm"]:
-            modality = "video"
-            tensor = preprocessor.process_video(temp_path)
-            score = detector.predict_video(tensor)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported file format")
-
-        torch.cuda.empty_cache()
-
-        return JSONResponse(content={
-            "filename": file.filename,
-            "modality": modality,
-            "fraud_probability": score
-        })
+        return result
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+        
     finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Passing 'app' object directly fixes the "Could not import module" error
+    uvicorn.run(app, host="0.0.0.0", port=8001, reload=False)
