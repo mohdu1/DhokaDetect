@@ -1,7 +1,7 @@
 import requests
 import base64
 
-IMAGE_PATH = r"C:\Users\Manas Thaker\OneDrive\Desktop\DhokaDetect\backend\ml_services\dataset\Fake\WhatsApp Image 2026-08-23 at 1.14.48 AM.jpeg"
+IMAGE_PATH = r"real_payment.jpeg"
 API_URL = "http://127.0.0.1:8001/detect-media"
 
 print(f"Sending {IMAGE_PATH} to Vision Microservice...")
