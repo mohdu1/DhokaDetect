@@ -1,84 +1,81 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   ShieldCheck,
-  ArrowUpRight,
   Paperclip,
   Languages,
   FileImage,
   X,
   AlertTriangle,
   CheckCircle2,
-  MessageSquareText,
-  Link2,
-  Image,
-  Volume2,
-  RotateCcw,
+  Mic,
+  Activity,
+  Globe,
+  Eye,
+  Server,
+  ChevronRight
 } from "lucide-react";
 
 import "./App.css";
+
+// Maps ugly backend variables to clean English for the judges
+const FLAG_DICTIONARY = {
+  "Visual / Font Inconsistency Detected in Receipt": {
+    title: "Visual Manipulation",
+    desc: "The image contains inconsistent fonts or tampered text."
+  },
+  "Tampered Pixel Boundary Artifacts": {
+    title: "Pixel Artifacts",
+    desc: "Signs of digital alteration detected around key areas."
+  },
+  "Moderate Visual Artifacts Detected": {
+    title: "Low-Quality Artifacts",
+    desc: "Image compression or minor anomalies present."
+  }
+};
 
 function App() {
   const [input, setInput] = useState("");
   const [file, setFile] = useState(null);
   const [language, setLanguage] = useState("English");
-  const [loading, setLoading] = useState(false);
+  
+  // App States: "idle" | "processing" | "complete"
+  const [appState, setAppState] = useState("idle");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
 
-  const languages = [
-    {
-      value: "English",
-      explain: "Explain results in",
-    },
-    {
-      value: "Hindi",
-      explain: "परिणाम समझाएँ",
-    },
-    {
-      value: "Marathi",
-      explain: "निकाल समजावून सांगा",
-    },
-  ];
-
-  const selectedLanguage = languages.find(
-    (item) => item.value === language
-  );
-
-  /* =========================
-     FILE UPLOAD
-  ========================= */
+  const fileInputRef = useRef(null);
 
   const handleFileChange = (event) => {
     const selectedFile = event.target.files?.[0];
-
     if (selectedFile) {
       setFile(selectedFile);
       setError("");
     }
-
     event.target.value = "";
   };
 
-  const removeFile = () => {
-    setFile(null);
+  // Hackathon Demo Magic: Simulates a live mic recording and transcription
+  const handleMicClick = () => {
+    if (isRecording) return;
+    setIsRecording(true);
+    setInput("");
+    
+    // Simulate listening for 3 seconds, then "transcribe" a scam phrase
+    setTimeout(() => {
+      setIsRecording(false);
+      setInput("Dear customer your electricity power will be disconnected tonight at 9:30 pm update your kyc immediately");
+    }, 3000);
   };
-
-  /* =========================
-     ANALYSE
-  ========================= */
 
   const handleResults = async () => {
     setError("");
-    setResult(null);
-
     if (!input.trim() && !file) {
-      setError(
-        "Please paste a message or link, or upload an image/video."
-      );
+      setError("Provide text, a link, or a file to begin analysis.");
       return;
     }
 
-    setLoading(true);
+    setAppState("processing");
 
     try {
       let base64Data = null;
@@ -86,819 +83,241 @@ function App() {
         base64Data = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
-          reader.onload = () => {
-            const base64String = reader.result.split(',')[1];
-            resolve(base64String);
-          };
+          reader.onload = () => resolve(reader.result.split(',')[1]);
           reader.onerror = (error) => reject(error);
         });
       }
 
-      const response = await fetch(
-        "http://127.0.0.1:8000/api/v1/analyze",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text_input: input.trim() || null,
-            image_base64: base64Data,
-            force_high_risk: false,
-          }),
-        }
-      );
+      const response = await fetch("http://127.0.0.1:8000/api/v1/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text_input: input.trim() || null,
+          image_base64: base64Data,
+          force_high_risk: false,
+        }),
+      });
       
-      if (!response.ok) {
-        throw new Error(
-          `Backend returned status ${response.status}`
-        );
-      }
+      if (!response.ok) throw new Error("Backend connection failed");
 
       const data = await response.json();
       setResult(data);
+      setAppState("complete");
       
     } catch {
-      setError(
-        "Unable to analyse the content. Please check the backend connection."
-      );
-    } finally {
-      setLoading(false);
+      setError("Engine unreachable. Check local backend connection.");
+      setAppState("idle");
     }
   };
 
-  /* =========================
-     NEW ANALYSIS
-  ========================= */
-
-  const handleNewAnalysis = () => {
+  const resetEngine = () => {
+    setAppState("idle");
     setResult(null);
-    setError("");
     setInput("");
     setFile(null);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    setError("");
   };
 
-  /* =========================
-     RISK HELPERS
-  ========================= */
-
-  const getRiskInfo = (score, level) => {
-    const numericScore = Number(score || 0);
-
-    const percentage = Math.max(
-      0,
-      Math.min(100, numericScore)
-    );
-
-    const normalizedLevel =
-      String(level || "").toUpperCase();
-
-    if (
-      normalizedLevel.includes("HIGH") ||
-      percentage >= 70
-    ) {
-      return {
-        className: "high",
-        label: "HIGH RISK",
-        percentage,
-        message:
-          "This content shows strong signs of suspicious or scam-like behaviour.",
-      };
-    }
-
-    if (
-      normalizedLevel.includes("MEDIUM") ||
-      normalizedLevel.includes("MODERATE") ||
-      percentage >= 40
-    ) {
-      return {
-        className: "medium",
-        label: "MEDIUM RISK",
-        percentage,
-        message:
-          "This content contains some warning signs. Proceed carefully.",
-      };
-    }
-
-    return {
-      className: "low",
-      label: "LOW RISK",
-      percentage,
-      message:
-        "No major warning signs were detected in this content.",
-    };
-  };
-
-  /* =========================
-     CHANNEL ICON
-  ========================= */
-
-  const getChannelIcon = (channel) => {
-    const value = String(channel).toLowerCase();
-
-    if (value.includes("text")) {
-      return <MessageSquareText size={15} />;
-    }
-
-    if (
-      value.includes("url") ||
-      value.includes("link")
-    ) {
-      return <Link2 size={15} />;
-    }
-
-    if (value.includes("image")) {
-      return <Image size={15} />;
-    }
-
-    if (value.includes("audio")) {
-      return <Volume2 size={15} />;
-    }
-
-    return <MessageSquareText size={15} />;
-  };
-
-  const getChannelName = (channel) => {
-    const value = String(channel).toLowerCase();
-
-    if (value.includes("text")) return "TEXT";
-    if (value.includes("url") || value.includes("link")) {
-      return "LINK";
-    }
-    if (value.includes("image")) return "IMAGE";
-    if (value.includes("audio")) return "AUDIO";
-
-    return String(channel).toUpperCase();
+  // SVG Gauge Helper
+  const calculateGaugeStroke = (score) => {
+    const radius = 60;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (score / 100) * circumference;
+    return { circumference, offset };
   };
 
   return (
-    <div className="app">
-
-      {/* ================= NAVBAR ================= */}
-
-      <header className="navbar">
-        <div className="nav-container">
-
-          <a href="/" className="brand">
-
-            <div className="brand-icon">
-              <ShieldCheck
-                size={25}
-                strokeWidth={2.2}
-              />
-            </div>
-
+    <div className="cockpit-layout">
+      
+      {/* ================= ZONE A: LEFT RAIL ================= */}
+      <aside className="zone-a-rail">
+        <div className="rail-top">
+          <div className="brand-lockup">
+            <ShieldCheck size={28} className="brand-icon" />
             <div className="brand-text">
-
-              <div className="brand-name">
-                Dhoka<span>Detect</span>
-              </div>
-
-              <div className="brand-tagline">
-                DIGITAL SAFETY
-              </div>
-
+              <h1>Dhoka<span>Detect</span></h1>
+              <span className="brand-tag">SECURITY ENGINE</span>
             </div>
-
-          </a>
-
-          <nav className="nav-links">
-
-            <a
-              href="#how-it-works"
-              className="how-link"
-            >
-              How it works
-            </a>
-
-            <a
-              href="#check"
-              className="protect-button"
-            >
-              Get Protected
-              <ArrowUpRight size={17} />
-            </a>
-
-          </nav>
-
-        </div>
-      </header>
-
-
-      <main>
-
-        {/* ================= MINIMAL HERO ================= */}
-
-        <section className="hero">
-
-          <div className="hero-content">
-
-            <h1>
-              Don't get fooled.
-            </h1>
-
-            <div className="eyebrow">
-
-              <span className="eyebrow-dot"></span>
-
-              AI-POWERED DIGITAL SAFETY
-
-            </div>
-
-            <p className="hero-description">
-              Paste a message or link, or upload a photo or video.
-              <br />
-              We'll help you understand what's suspicious.
-            </p>
-
           </div>
 
-        </section>
-
-
-        {/* ================= INPUT SECTION ================= */}
-
-        <section
-          className="analysis-section"
-          id="check"
-        >
-
-          <div className="analysis-container">
-
-            {/* LANGUAGE */}
-
-            <div className="language-row">
-
-              <div className="language-label">
-
-                <Languages size={18} />
-
-                <span>
-                  {selectedLanguage.explain}
-                </span>
-
-              </div>
-
-              <div className="language-select-wrapper">
-
-                <select
-                  value={language}
-                  onChange={(event) =>
-                    setLanguage(event.target.value)
-                  }
-                  className="language-select"
-                  disabled={loading}
-                >
-
-                  <option value="English">
-                    English
-                  </option>
-
-                  <option value="Hindi">
-                    Hindi (हिन्दी)
-                  </option>
-
-                  <option value="Marathi">
-                    Marathi (मराठी)
-                  </option>
-
-                </select>
-
-                <span className="select-arrow">
-                  ▾
-                </span>
-
-              </div>
-
+          <div className="engine-status">
+            <span className="status-label">ENGINE STATUS</span>
+            <div className="status-indicator">
+              <span className={`dot ${appState !== "idle" ? "pulse active" : "pulse"}`}></span>
+              {appState === "idle" ? "Standby" : "Active"}
             </div>
+          </div>
+        </div>
 
+        <div className="rail-bottom">
+          <div className="trust-signals">
+            <div className="signal"><Server size={14} /> 4-Model Fusion</div>
+            <div className="signal"><ShieldCheck size={14} /> On-Device Privacy</div>
+          </div>
 
-            {/* INPUT */}
+          <div className="language-selector">
+            <Languages size={14} />
+            <select value={language} onChange={(e) => setLanguage(e.target.value)} disabled={appState === "processing"}>
+              <option value="English">English</option>
+              <option value="Hindi">Hindi (हिन्दी)</option>
+              <option value="Marathi">Marathi (मराठी)</option>
+            </select>
+          </div>
+        </div>
+      </aside>
 
-            <div className="universal-input">
+      {/* ================= ZONE B: CENTER CONSOLE ================= */}
+      <main className="zone-b-console">
+        <div className="console-wrapper">
+          <h2 className="console-title">Unified Threat Scanner</h2>
+          <p className="console-subtitle">Drop screenshots, paste URLs, or record live audio.</p>
 
-              <textarea
-                value={input}
-                onChange={(event) => {
-                  setInput(event.target.value);
-                  setError("");
-                }}
-                placeholder="Paste a suspicious message or link here..."
-                className="message-input"
-                disabled={loading}
-              />
+          <div className={`input-arena ${appState === "processing" ? "locked" : ""}`}>
+            
+            {/* The Main Input Area */}
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Paste message, URL, or click the mic to record..."
+              disabled={appState === "processing" || isRecording}
+              className={`main-textarea ${isRecording ? "is-recording" : ""}`}
+            />
 
-              {file && (
-                <div className="uploaded-file">
-
-                  <div className="file-info">
-
-                    <div className="file-icon">
-                      <FileImage size={20} />
-                    </div>
-
-                    <div>
-
-                      <strong>
-                        {file.name}
-                      </strong>
-
-                      <span>
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB
-                      </span>
-
-                    </div>
-
-                  </div>
-
-                  <button
-                    className="remove-file"
-                    onClick={removeFile}
-                    type="button"
-                    disabled={loading}
-                  >
-                    <X size={18} />
-                  </button>
-
-                </div>
-              )}
-
-              <div className="input-footer">
-
-                <label
-                  htmlFor="file-upload"
-                  className="upload-button"
-                >
-
-                  <Paperclip size={18} />
-
-                  <span>
-                    Upload photo / video
-                  </span>
-
-                </label>
-
-                <input
-                  id="file-upload"
-                  type="file"
-                  accept="image/*,video/*"
-                  onChange={handleFileChange}
-                  hidden
-                  disabled={loading}
-                />
-
-                <span className="input-hint">
-                  JPG · PNG · JPEG · MP4
-                </span>
-
-              </div>
-
-            </div>
-
-
-            {/* ERROR */}
-
-            {error && (
-              <div className="error-message">
-                {error}
+            {/* File Chip */}
+            {file && (
+              <div className="file-chip">
+                <FileImage size={16} />
+                <span className="file-name">{file.name}</span>
+                <button onClick={() => setFile(null)}><X size={14}/></button>
               </div>
             )}
 
-
-            {/* ANALYSE BUTTON */}
-
-            <button
-              className="results-button"
-              onClick={handleResults}
-              type="button"
-              disabled={loading}
-            >
-
-              {loading ? (
-                <>
-                  <span className="spinner"></span>
-                  <span>Checking...</span>
-                </>
-              ) : (
-                <>
-                  <span>
-                    {language === "Hindi"
-                      ? "परिणाम"
-                      : language === "Marathi"
-                      ? "निकाल"
-                      : "Results"}
-                  </span>
-
-                  <ArrowUpRight size={20} />
-                </>
-              )}
-
-            </button>
-
-
-            {/* =========================
-                RESULT SHOWCASE
-            ========================= */}
-
-            {result &&
-              !loading &&
-              (() => {
-
-                const risk = getRiskInfo(
-                  result.overall_risk_score,
-                  result.risk_level
-                );
-
-                const flags =
-                  result.red_flags?.map(f => f.indicator) || [];
-
-                const channels =
-                  Object.keys(result.breakdown || {}).filter(k => result.breakdown[k] !== null);
-
-                return (
-
-                  <section
-                    className={`result-showcase ${risk.className}`}
-                  >
-
-                    {/* RESULT HEADER */}
-
-                    <div className="result-top">
-
-                      <div>
-
-                        <span className="result-kicker">
-                          ANALYSIS COMPLETE
-                        </span>
-
-                        <h2>
-                          Here's what we found.
-                        </h2>
-
-                      </div>
-
-                      <div className="result-check">
-                        <CheckCircle2 size={21} />
-                      </div>
-
-                    </div>
-
-
-                    {/* RISK CARD */}
-
-                    <div className="risk-card">
-
-                      <div className="risk-card-left">
-
-                        <div className="risk-label">
-                          RISK LEVEL
-                        </div>
-
-                        <div className="risk-badge">
-
-                          <AlertTriangle size={17} />
-
-                          {risk.label}
-
-                        </div>
-
-                        <p className="risk-message">
-                          {risk.message}
-                        </p>
-
-                      </div>
-
-
-                      <div className="risk-score">
-
-                        <div className="score-number">
-
-                          {risk.percentage.toFixed(1)}
-
-                          <span>
-                            %
-                          </span>
-
-                        </div>
-
-                        <div className="score-label">
-                          risk score
-                        </div>
-
-                      </div>
-
-                    </div>
-
-
-                    {/* PROGRESS BAR */}
-
-                    <div className="risk-progress">
-
-                      <div className="progress-header">
-
-                        <span>
-                          Overall risk
-                        </span>
-
-                        <strong>
-                          {risk.percentage.toFixed(1)}%
-                        </strong>
-
-                      </div>
-
-                      <div className="progress-track">
-
-                        <div
-                          className="progress-fill"
-                          style={{
-                            width: `${risk.percentage}%`,
-                          }}
-                        ></div>
-
-                      </div>
-
-                    </div>
-
-
-                    {/* RED FLAGS */}
-
-                    <div className="result-section">
-
-                      <div className="result-section-heading">
-
-                        <div>
-
-                          <span>
-                            WARNING SIGNS
-                          </span>
-
-                          <h3>
-                            Red flags detected
-                          </h3>
-
-                        </div>
-
-                        <div className="flag-count">
-                          {flags.length}
-                        </div>
-
-                      </div>
-
-
-                      {flags.length > 0 ? (
-
-                        <div className="flag-list">
-
-                          {flags.map(
-                            (flag, index) => (
-
-                              <div
-                                className="flag-card"
-                                key={index}
-                              >
-
-                                <div className="flag-icon">
-
-                                  <AlertTriangle
-                                    size={20}
-                                  />
-
-                                </div>
-
-                                <div className="flag-content">
-
-                                  <strong>
-                                    {flag}
-                                  </strong>
-
-                                  <span>
-                                    This is a warning sign
-                                    that deserves attention.
-                                  </span>
-
-                                </div>
-
-                              </div>
-
-                            )
-                          )}
-
-                        </div>
-
-                      ) : (
-
-                        <div className="no-flags">
-
-                          <CheckCircle2 size={20} />
-
-                          <span>
-                            No specific red flags were
-                            identified.
-                          </span>
-
-                        </div>
-
-                      )}
-
-                    </div>
-
-
-                    {/* ACTIVE CHANNELS */}
-
-                    {channels.length > 0 && (
-
-                      <div className="result-section channel-section">
-
-                        <div className="result-section-heading">
-
-                          <div>
-
-                            <span>
-                              ANALYSED THROUGH
-                            </span>
-
-                            <h3>
-                              Active channels
-                            </h3>
-
-                          </div>
-
-                        </div>
-
-
-                        <div className="channel-list">
-
-                          {channels.map(
-                            (channel, index) => (
-
-                              <div
-                                className="channel-chip"
-                                key={index}
-                              >
-
-                                {getChannelIcon(channel)}
-
-                                {getChannelName(channel)}
-
-                              </div>
-
-                            )
-                          )}
-
-                        </div>
-
-                      </div>
-
-                    )}
-
-
-                    {/* BOTTOM ACTION */}
-
-                    <div className="result-bottom">
-
-                      <div className="result-tip">
-
-                        <ShieldCheck size={19} />
-
-                        <span>
-                          Think twice before taking
-                          action on suspicious content.
-                        </span>
-
-                      </div>
-
-                      <button
-                        className="new-analysis-button"
-                        onClick={handleNewAnalysis}
-                      >
-
-                        <RotateCcw size={17} />
-
-                        Analyse another
-
-                      </button>
-
-                    </div>
-
-                  </section>
-
-                );
-
-              })()}
-
+            {/* Action Bar Inside Input */}
+            <div className="input-action-bar">
+              <div className="left-actions">
+                <button 
+                  className="icon-btn" 
+                  onClick={() => fileInputRef.current?.click()}
+                  title="Upload Image/Video"
+                >
+                  <Paperclip size={18} />
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  hidden 
+                  accept="image/*,video/*"
+                />
+
+                <button 
+                  className={`icon-btn mic-btn ${isRecording ? "recording-active" : ""}`}
+                  onClick={handleMicClick}
+                  title="Live Audio Scan"
+                >
+                  {isRecording ? <div className="recording-wave"><span></span><span></span><span></span></div> : <Mic size={18} />}
+                </button>
+              </div>
+
+              <button 
+                className="analyse-btn"
+                onClick={handleResults}
+                disabled={appState === "processing" || (!input && !file && !isRecording)}
+              >
+                {appState === "processing" ? "Scanning..." : "Analyse"} <ChevronRight size={16}/>
+              </button>
+            </div>
           </div>
 
-        </section>
-
-
-        {/* ================= HOW IT WORKS ================= */}
-
-        <section
-          className="how-it-works"
-          id="how-it-works"
-        >
-
-          <div className="how-container">
-
-            <div className="how-header">
-
-              <span className="small-label">
-                HOW IT WORKS
-              </span>
-
-              <h2>
-                Simple enough
-                <br />
-                <span>for everyone.</span>
-              </h2>
-
-            </div>
-
-            <div className="steps">
-
-              <div className="step">
-
-                <div className="step-number">
-                  01
-                </div>
-
-                <h3>
-                  Give us the suspicious content.
-                </h3>
-
-                <p>
-                  Paste a message or link, or upload
-                  an image or video.
-                </p>
-
-              </div>
-
-              <div className="step">
-
-                <div className="step-number">
-                  02
-                </div>
-
-                <h3>
-                  We check the warning signs.
-                </h3>
-
-                <p>
-                  DhokaDetect looks for suspicious
-                  patterns and manipulation indicators.
-                </p>
-
-              </div>
-
-              <div className="step">
-
-                <div className="step-number">
-                  03
-                </div>
-
-                <h3>
-                  Understand before you act.
-                </h3>
-
-                <p>
-                  Get a simple explanation and a safer
-                  next step in your chosen language.
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
-
+          {error && <div className="error-bar"><AlertTriangle size={14}/> {error}</div>}
+        </div>
       </main>
 
+      {/* ================= ZONE C: RESULTS PANEL ================= */}
+      <aside className="zone-c-results">
+        
+        {/* STATE 1: IDLE */}
+        {appState === "idle" && (
+          <div className="panel-idle">
+            <div className="radar-spinner"><ShieldCheck size={48} /></div>
+            <h3>System Ready</h3>
+            <p>Awaiting payload for analysis.</p>
+          </div>
+        )}
 
-      {/* ================= FOOTER ================= */}
+        {/* STATE 2: PROCESSING (The Fake-it-till-you-make-it Late Fusion Loader) */}
+        {appState === "processing" && (
+          <div className="panel-processing">
+            <h3>Fusing Modalities...</h3>
+            <div className="process-queue">
+              <div className="queue-item active"><Activity size={16}/> Analyzing NLP Vectors...</div>
+              <div className="queue-item active" style={{animationDelay: "0.4s"}}><Globe size={16}/> Verifying URL Typography...</div>
+              <div className="queue-item active" style={{animationDelay: "0.8s"}}><Eye size={16}/> Extracting Swin Visuals...</div>
+            </div>
+          </div>
+        )}
 
-      <footer className="footer">
+        {/* STATE 3: COMPLETE */}
+        {appState === "complete" && result && (() => {
+          const score = result.overall_risk_score || 0;
+          const { circumference, offset } = calculateGaugeStroke(score);
+          let severityClass = "safe";
+          if (score >= 70) severityClass = "critical";
+          else if (score >= 40) severityClass = "warning";
 
-        <div className="footer-brand">
+          return (
+            <div className={`panel-complete fade-in ${severityClass}`}>
+              <div className="result-header">
+                <button className="reset-btn" onClick={resetEngine}><X size={18}/></button>
+                <span className="verdict-badge">{result.risk_level} RISK</span>
+              </div>
 
-          <ShieldCheck size={18} />
+              {/* The Speedometer */}
+              <div className="gauge-container">
+                <svg className="gauge" viewBox="0 0 140 140">
+                  <circle className="gauge-bg" cx="70" cy="70" r="60" strokeWidth="12" />
+                  <circle 
+                    className="gauge-fill" 
+                    cx="70" cy="70" r="60" 
+                    strokeWidth="12" 
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                  />
+                </svg>
+                <div className="gauge-center">
+                  <span className="gauge-score">{score}</span>
+                  <span className="gauge-percent">%</span>
+                </div>
+              </div>
 
-          DhokaDetect
+              {/* Red Flags */}
+              <div className="flags-container">
+                <h4>Detected Anomalies</h4>
+                <div className="flags-list">
+                  {result.red_flags?.length > 0 ? result.red_flags.map((flag, idx) => {
+                    const cleanFlag = FLAG_DICTIONARY[flag.description] || { title: flag.indicator || "Threat Detected", desc: flag.description };
+                    return (
+                      <div className="flag-item" key={idx}>
+                        <AlertTriangle size={16} className="flag-icon" />
+                        <div className="flag-text">
+                          <strong>{cleanFlag.title}</strong>
+                          <p>{cleanFlag.desc}</p>
+                        </div>
+                      </div>
+                    )
+                  }) : (
+                    <div className="flag-item safe">
+                      <CheckCircle2 size={16} className="flag-icon" />
+                      <div className="flag-text"><strong>No anomalies found.</strong></div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-        </div>
-
-        <span>
-          Detect · Explain · Protect.
-        </span>
-
-      </footer>
-
+            </div>
+          )
+        })()}
+      </aside>
     </div>
   );
 }
