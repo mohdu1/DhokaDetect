@@ -11,9 +11,11 @@ from transformers import AutoModelForImageClassification
 from pytorch_grad_cam import GradCAM
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
+
 class VisionService:
     def __init__(self):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.is_cuda = self.device.type == "cuda"
         print(f"Booting Dual-Modal Vision Engine on {self.device}...")
 
         # 1. PAYMENT FRAUD MODEL (Swin Transformer)
@@ -21,7 +23,7 @@ class VisionService:
             "microsoft/swin-base-patch4-window7-224"
         )
         self.payment_model.classifier = nn.Linear(self.payment_model.classifier.in_features, 1)
-        
+
         # Auto-detect trained weight file location
         script_dir = os.path.dirname(os.path.abspath(__file__))
         possible_weight_paths = [
@@ -29,7 +31,7 @@ class VisionService:
             os.path.join(script_dir, "swin_fraud_head.pt"),
             os.path.join(script_dir, "..", "swin_fraud_head.pt")
         ]
-        
+
         loaded_weights = False
         for wpath in possible_weight_paths:
             if os.path.exists(wpath):
@@ -39,11 +41,13 @@ class VisionService:
                 print(f"✅ Loaded trained payment weights from: {wpath}")
                 loaded_weights = True
                 break
-                
+
         if not loaded_weights:
             print("⚠️ Warning: 'swin_fraud_head.pt' not found. Using baseline classifier.")
 
-        self.payment_model = self.payment_model.to(self.device).half()
+        self.payment_model = self.payment_model.to(self.device)
+        if self.is_cuda:
+            self.payment_model = self.payment_model.half()
         self.payment_model.eval()
         self.payment_target = [self.payment_model.swin.layernorm]
 
@@ -51,7 +55,9 @@ class VisionService:
         self.deepfake_model = AutoModelForImageClassification.from_pretrained(
             "prithivMLmods/Deepfake-Detection-Exp-02-22"
         )
-        self.deepfake_model = self.deepfake_model.to(self.device).half()
+        self.deepfake_model = self.deepfake_model.to(self.device)
+        if self.is_cuda:
+            self.deepfake_model = self.deepfake_model.half()
         self.deepfake_model.eval()
         self.deepfake_target = [self.deepfake_model.vit.layers[-1].layernorm_before]
 
@@ -78,7 +84,6 @@ class VisionService:
         return Image.open(image_input).convert("RGB")
 
     def detect_and_explain(self, file_input, task="payment"):
-        """Primary Entry Point: Accepts image/video and routing task ('payment' or 'deepfake')"""
         if isinstance(file_input, str) and file_input.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
             return self._analyze_video(file_input, task)
         else:
@@ -89,7 +94,6 @@ class VisionService:
         return self._process_frame(image, task)
 
     def _analyze_video(self, video_path, task):
-        print(f"Extracting frames from video: {video_path}")
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             raise ValueError("Could not open video file.")
@@ -118,23 +122,25 @@ class VisionService:
 
         for idx, frame in enumerate(frames_to_process):
             result = self._process_frame(frame, task)
-            if result["fraud_probability"] > highest_score:
-                highest_score = result["fraud_probability"]
+            if result["risk_score"] > highest_score:
+                highest_score = result["risk_score"]
                 worst_frame_result = result
 
         worst_frame_result["mode_used"] = f"{task} (Video Analysis)"
         return worst_frame_result
 
     def _process_frame(self, image, task):
-        tensor = self.transform(image).unsqueeze(0).to(self.device).half()
-        
+        tensor = self.transform(image).unsqueeze(0).to(self.device)
+        if self.is_cuda:
+            tensor = tensor.half()
+
         if task == "deepfake":
             model = self.deepfake_model
             target_layers = self.deepfake_target
         else:
             model = self.payment_model
             target_layers = self.payment_target
-            
+
         with torch.no_grad():
             outputs = model(tensor)
             if task == "deepfake":
@@ -145,14 +151,14 @@ class VisionService:
 
         model.zero_grad()
         tensor.requires_grad = True
-        
+
         try:
             cam = GradCAM(model=model, target_layers=target_layers)
             grayscale_cam = cam(input_tensor=tensor, targets=None)[0, :]
-            
+
             rgb_img = np.float32(image.resize((224, 224))) / 255
             visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
-            
+
             pil_heatmap = Image.fromarray(visualization)
             buffered = io.BytesIO()
             pil_heatmap.save(buffered, format="JPEG")
@@ -160,8 +166,18 @@ class VisionService:
         except Exception:
             heatmap_base64 = None
 
+        # Generate red flags based on score thresholds for late fusion
+        red_flags = []
+        if score >= 0.70:
+            red_flags.append("Visual / Font Inconsistency Detected in Receipt")
+            red_flags.append("Tampered Pixel Boundary Artifacts")
+        elif score >= 0.40:
+            red_flags.append("Moderate Visual Artifacts Detected")
+
         return {
+            "risk_score": score,
             "fraud_probability": score,
+            "red_flags": red_flags,
             "heatmap_base64": heatmap_base64,
             "mode_used": task
         }

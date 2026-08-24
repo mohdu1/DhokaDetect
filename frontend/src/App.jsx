@@ -81,21 +81,34 @@ function App() {
     setLoading(true);
 
     try {
-     const response = await fetch(
-  "https://f199e2ac4ca25a.lhr.life/api/v1/analyze",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      text_input: input.trim(),
-      url_confidence: null,
-      image_confidence: null,
-      audio_confidence: null,
-    }),
-  }
-);
+      let base64Data = null;
+      if (file) {
+        base64Data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const base64String = reader.result.split(',')[1];
+            resolve(base64String);
+          };
+          reader.onerror = (error) => reject(error);
+        });
+      }
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/v1/analyze",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text_input: input.trim() || null,
+            image_base64: base64Data,
+            force_high_risk: false,
+          }),
+        }
+      );
+      
       if (!response.ok) {
         throw new Error(
           `Backend returned status ${response.status}`
@@ -103,13 +116,9 @@ function App() {
       }
 
       const data = await response.json();
-
-      console.log("Backend response:", data);
-
       setResult(data);
-    } catch (err) {
-      console.error("Analysis error:", err);
-
+      
+    } catch {
       setError(
         "Unable to analyse the content. Please check the backend connection."
       );
@@ -143,7 +152,7 @@ function App() {
 
     const percentage = Math.max(
       0,
-      Math.min(100, numericScore * 100)
+      Math.min(100, numericScore)
     );
 
     const normalizedLevel =
@@ -501,15 +510,15 @@ function App() {
               (() => {
 
                 const risk = getRiskInfo(
-                  result.final_risk_score,
+                  result.overall_risk_score,
                   result.risk_level
                 );
 
                 const flags =
-                  result.aggregated_red_flags || [];
+                  result.red_flags?.map(f => f.indicator) || [];
 
                 const channels =
-                  result.active_channels || [];
+                  Object.keys(result.breakdown || {}).filter(k => result.breakdown[k] !== null);
 
                 return (
 

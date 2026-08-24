@@ -4,3 +4,9 @@ frontend-dev
 __pycache__/
 .DS_Store
 main
+*.csv
+*.pkl
+venv/
+frontend/node_modules/
+frontend/dist/
+frontend/repomix-output.xml

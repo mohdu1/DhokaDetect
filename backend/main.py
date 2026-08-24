@@ -1,18 +1,17 @@
 import re
 import uuid
-import asyncio
+import base64
 
 import httpx
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 
-# Local ML & Logic Imports
-from ml_services.model_manager import LocalScamDetector            # Aditi's NLP Engine
-from url_detection import url_classifier                           # Arnav's URL Extraction & Analysis
-from ml_services.fusion_engine import FusionEngine, ModalityScore   # Late-Fusion Math
+from ml_services.model_manager import LocalScamDetector
+from url_detection import url_classifier
+from ml_services.fusion_engine import FusionEngine, ModalityScore
 from schemas import (
     ScanResponse,
     RiskLevel,
@@ -26,9 +25,6 @@ from schemas import (
 )
 
 
-# ==========================================
-# 1. App Initialization & CORS
-# ==========================================
 app = FastAPI(title="DhokaDetect Orchestration Engine")
 
 app.add_middleware(
@@ -39,10 +35,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Manas's Remote GPU Vision Service
-VISION_SERVICE_URL = "https://20b78333ede132.lhr.life/api/v1/analyze-image"
+VISION_SERVICE_URL = "http://127.0.0.1:8001/detect-media"
 
-# Simple URL matcher for pulling links out of raw SMS/WhatsApp text
 URL_REGEX = re.compile(r"(https?://\S+|www\.\S+|\b[a-zA-Z0-9-]+\.(?:com|in|co\.in|org|net)\b\S*)")
 
 # Stopgap regex sets used to fill in TextAnalysisResult's three sub-scores,
@@ -63,12 +57,13 @@ ENTITY_EXTRACTION_PATTERNS = {
     "vpa": r"\b[\w.\-]+@[\w]+\b",
 }
 
+VISION_UPLOAD_FILENAME = "frame.jpg"
+VISION_UPLOAD_CONTENT_TYPE = "image/jpeg"
+VISION_TASK = "payment"
 
-# ==========================================
-# 2. Load models ONCE at startup, not per-request
-# ==========================================
+
 text_detector: Optional[LocalScamDetector] = None
-fusion_engine = FusionEngine()  # cheap to construct, no model weights, fine at import time
+fusion_engine = FusionEngine()
 
 
 @app.on_event("startup")
@@ -77,18 +72,12 @@ async def load_models():
     text_detector = LocalScamDetector()
 
 
-# ==========================================
-# 3. Incoming Request Schema
-# ==========================================
 class AnalyzeRequest(BaseModel):
     text_input: Optional[str] = Field(None, description="Raw SMS/WhatsApp message text")
     image_base64: Optional[str] = Field(None, description="Base64 encoded image or frame buffer")
     force_high_risk: Optional[bool] = Field(False, description="Manual override for demo/evaluator purposes")
 
 
-# ==========================================
-# 4. Helpers - raw modality calls
-# ==========================================
 def extract_urls(text: str) -> List[str]:
     return URL_REGEX.findall(text)
 
@@ -117,9 +106,31 @@ def run_url_analysis(text: str) -> Optional[Dict[str, Any]]:
     }
 
 
-# ==========================================
-# 5. Helpers - fusion input conversion
-# ==========================================
+async def run_vision_analysis(image_b64: str) -> Dict[str, Any]:
+    """Send a base64 image to the local vision service as multipart form data."""
+    try:
+        image_bytes = base64.b64decode(image_b64, validate=True)
+        files = {
+            "file": (VISION_UPLOAD_FILENAME, image_bytes, VISION_UPLOAD_CONTENT_TYPE),
+        }
+        data = {"task": VISION_TASK}
+
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post(
+                VISION_SERVICE_URL,
+                files=files,
+                data=data,
+            )
+            response.raise_for_status()
+            return response.json()
+    except Exception as exc:
+        return {
+            "risk_score": 0.0,
+            "status": "vision_fallback",
+            "error_log": str(exc),
+        }
+
+
 def to_text_score(text_result: Optional[Dict[str, Any]]) -> Optional[ModalityScore]:
     if text_result is None:
         return None
@@ -150,9 +161,6 @@ def to_vision_score(vision_result: Optional[Dict[str, Any]]) -> Optional[Modalit
     )
 
 
-# ==========================================
-# 6. Helpers - building the ScanResponse contract
-# ==========================================
 def score_to_risk_level(score: float) -> RiskLevel:
     if score >= 0.85:
         return RiskLevel.CRITICAL
@@ -205,7 +213,7 @@ def build_url_breakdown(url_result: Dict[str, Any]) -> URLAnalysisResult:
     return URLAnalysisResult(
         extracted_urls=url_result["all_urls"],
         typosquatting_detected=url_result["top_typosquatting"],
-        punycode_detected=False,  # NOT IMPLEMENTED: url_classifier has no punycode check yet
+        punycode_detected=False,
         domain_reputation_score=url_result["top_risk_score"],
         risk_score=url_result["top_risk_score"],
     )
@@ -257,9 +265,8 @@ def build_scan_response(
     breakdown = ModalityBreakdown(
         text=build_text_breakdown(text, text_result) if (text and text_result) else None,
         url=build_url_breakdown(url_result) if url_result else None,
-        visual=None,  # STOPGAP: DeepfakeAnalysisResult needs fields Manas's vision service
-                      # response shape hasn't been confirmed to provide yet.
-        audio=None,   # Audio pipeline not implemented yet.
+        visual=None,
+        audio=None,
     )
 
     red_flags = build_red_flags(fusion_result, score)
@@ -276,51 +283,36 @@ def build_scan_response(
     )
 
 
-# ==========================================
-# 7. Main Orchestration Endpoint
-# ==========================================
 @app.post("/api/v1/analyze", response_model=ScanResponse)
 async def analyze_payload(request: AnalyzeRequest):
-    """
-    Core routing endpoint. Dispatches text/URL locally and async requests to the remote Vision API.
-    Fuses all returned metrics into a single explainable risk score.
-    """
+    """Analyze supplied text, URLs, and media through local services."""
 
     text_result: Optional[Dict[str, Any]] = None
     url_result: Optional[Dict[str, Any]] = None
     vision_result: Optional[Dict[str, Any]] = None
 
-    # Step A: Local NLP and URL Processing (Aditi & Arnav)
     if request.text_input:
-        if text_detector is None:
-            raise HTTPException(status_code=503, detail="Text model not loaded yet, try again shortly")
+        try:
+            if text_detector is not None:
+                predictions, inference_time = text_detector.predict([request.text_input])
+                text_result = predictions[0]
+                text_result["inference_time_sec"] = round(inference_time, 4)
+        except Exception as exc:
+            text_result = {
+                "scam_confidence": 0.0,
+                "ml_bert_score": 0.0,
+                "red_flags": [],
+                "error_log": str(exc),
+            }
 
-        predictions, inference_time = text_detector.predict([request.text_input])
-        text_result = predictions[0]
-        text_result["inference_time_sec"] = round(inference_time, 4)
+        try:
+            url_result = run_url_analysis(request.text_input)
+        except Exception:
+            url_result = None
 
-        url_result = run_url_analysis(request.text_input)
-
-    # Step B: Remote Vision Processing (Manas) - Non-blocking HTTPX Call
     if request.image_base64:
-        async with httpx.AsyncClient() as client:
-            try:
-                response = await client.post(
-                    VISION_SERVICE_URL,
-                    json={"image_base64": request.image_base64},
-                    timeout=5.0
-                )
-                response.raise_for_status()
-                vision_result = response.json()
-            except (httpx.RequestError, httpx.HTTPStatusError) as exc:
-                print(f"[WARN] Vision microservice fallback triggered: {exc}")
-                vision_result = {
-                    "risk_score": 0.0,
-                    "status": "unreachable_fallback",
-                    "error_log": str(exc)
-                }
+        vision_result = await run_vision_analysis(request.image_base64)
 
-    # Step C: Late-Fusion Risk Scoring
     fusion_result = fusion_engine.compute_final_risk(
         text_score=to_text_score(text_result),
         url_score=to_url_score(url_result),
