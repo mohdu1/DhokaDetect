@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 
-from ml_services.model_manager import LocalScamDetector
+from ml_services.predict_nlp import ScamDetector
 from url_detection import url_classifier
 from ml_services.fusion_engine import FusionEngine, ModalityScore
 from schemas import (
@@ -35,13 +35,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Manas's Vision and Audio Service Endpoints
 VISION_SERVICE_URL = "http://127.0.0.1:8001/detect-media"
+AUDIO_SERVICE_URL = "http://127.0.0.1:8001/analyze-audio"
 
 URL_REGEX = re.compile(r"(https?://\S+|www\.\S+|\b[a-zA-Z0-9-]+\.(?:com|in|co\.in|org|net)\b\S*)")
 
-# Stopgap regex sets used to fill in TextAnalysisResult's three sub-scores,
-# since LocalScamDetector currently only returns one combined heuristic score
-# plus a flat red_flags list. Ideally Aditi's module returns these natively.
+# Stopgap regex sets used to fill in TextAnalysisResult's three sub-scores
 URGENCY_PATTERNS = [
     r"within \d+ mins?", r"immediate(ly)?", r"\btoday\b", r"avoid disconnection", r"account will be blocked"
 ]
@@ -61,20 +61,24 @@ VISION_UPLOAD_FILENAME = "frame.jpg"
 VISION_UPLOAD_CONTENT_TYPE = "image/jpeg"
 VISION_TASK = "payment"
 
+AUDIO_UPLOAD_FILENAME = "upload.wav"
+AUDIO_UPLOAD_CONTENT_TYPE = "audio/wav"
 
-text_detector: Optional[LocalScamDetector] = None
+
+text_detector: Optional[ScamDetector] = None
 fusion_engine = FusionEngine()
 
 
 @app.on_event("startup")
 async def load_models():
     global text_detector
-    text_detector = LocalScamDetector()
+    text_detector = ScamDetector()
 
 
 class AnalyzeRequest(BaseModel):
     text_input: Optional[str] = Field(None, description="Raw SMS/WhatsApp message text")
     image_base64: Optional[str] = Field(None, description="Base64 encoded image or frame buffer")
+    audio_base64: Optional[str] = Field(None, description="Base64 encoded audio file (.wav format expected)")
     force_high_risk: Optional[bool] = Field(False, description="Manual override for demo/evaluator purposes")
 
 
@@ -131,6 +135,29 @@ async def run_vision_analysis(image_b64: str) -> Dict[str, Any]:
         }
 
 
+async def run_audio_analysis(audio_b64: str) -> Dict[str, Any]:
+    """Send a base64 audio file to the local audio analysis service."""
+    try:
+        audio_bytes = base64.b64decode(audio_b64, validate=True)
+        files = {
+            "file": (AUDIO_UPLOAD_FILENAME, audio_bytes, AUDIO_UPLOAD_CONTENT_TYPE),
+        }
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                AUDIO_SERVICE_URL,
+                files=files,
+            )
+            response.raise_for_status()
+            return response.json()
+    except Exception as exc:
+        return {
+            "risk_score": 0.0,
+            "verdict": "audio_fallback",
+            "error_log": str(exc),
+        }
+
+
 def to_text_score(text_result: Optional[Dict[str, Any]]) -> Optional[ModalityScore]:
     if text_result is None:
         return None
@@ -161,6 +188,25 @@ def to_vision_score(vision_result: Optional[Dict[str, Any]]) -> Optional[Modalit
     )
 
 
+def to_audio_score(audio_result: Optional[Dict[str, Any]]) -> Optional[ModalityScore]:
+    if audio_result is None:
+        return None
+    
+    # Extract score from Manas's Wav2Vec2/librosa endpoint structure
+    confidence = audio_result.get("risk_score", 0.0)
+    verdict = audio_result.get("verdict", "Unknown")
+    
+    flags = []
+    if confidence >= 0.4:
+        flags.append(f"AI Audio Clone Suspected ({verdict})")
+
+    return ModalityScore(
+        confidence=confidence,
+        weight=0.20,
+        red_flags=flags,
+    )
+
+
 def score_to_risk_level(score: float) -> RiskLevel:
     if score >= 0.85:
         return RiskLevel.CRITICAL
@@ -186,10 +232,6 @@ def score_to_severity(score: float) -> SeverityLevel:
 
 
 def build_text_breakdown(text: str, text_result: Dict[str, Any]) -> TextAnalysisResult:
-    """STOPGAP: LocalScamDetector only returns one combined heuristic score,
-    not the three separate sub-scores this schema wants. Approximated here
-    via binary presence of each regex pattern group. Aditi's module should
-    ideally expose these natively instead of main.py re-deriving them."""
     text_lower = text.lower()
 
     urgency_score = 1.0 if any(re.search(p, text_lower) for p in URGENCY_PATTERNS) else round(text_result["ml_bert_score"] * 0.3, 4)
@@ -220,19 +262,15 @@ def build_url_breakdown(url_result: Dict[str, Any]) -> URLAnalysisResult:
 
 
 def build_red_flags(fusion_result: Dict[str, Any], overall_score: float) -> List[RedFlag]:
-    """Severity is approximated from the overall fused score, since FusionEngine
-    doesn't track per-flag severity individually."""
     severity = score_to_severity(overall_score)
     flags = []
-    for flag_text in fusion_result["aggregated_red_flags"]:
+    for flag_text in fusion_result.get("aggregated_red_flags", []):
         indicator = re.sub(r"[^A-Z0-9]+", "_", flag_text.upper()).strip("_")[:40]
         flags.append(RedFlag(indicator=indicator, severity=severity, description=flag_text))
     return flags
 
 
 def build_explanations(overall_score: float, risk_level: RiskLevel, flags: List[RedFlag]) -> Dict[SupportedLanguage, LocalizedGuidance]:
-    """STOPGAP: only English is populated. Hindi/Marathi localization is not
-    wired up yet - add real translations here once that pipeline exists."""
     flag_summary = "; ".join(f.description for f in flags) if flags else "No specific red flags detected."
 
     if risk_level in (RiskLevel.HIGH, RiskLevel.CRITICAL):
@@ -285,18 +323,26 @@ def build_scan_response(
 
 @app.post("/api/v1/analyze", response_model=ScanResponse)
 async def analyze_payload(request: AnalyzeRequest):
-    """Analyze supplied text, URLs, and media through local services."""
+    """Analyze supplied text, URLs, media, and audio through local services."""
 
     text_result: Optional[Dict[str, Any]] = None
     url_result: Optional[Dict[str, Any]] = None
     vision_result: Optional[Dict[str, Any]] = None
+    audio_result: Optional[Dict[str, Any]] = None
 
+    # 1. Process Text and URLs
     if request.text_input:
         try:
             if text_detector is not None:
-                predictions, inference_time = text_detector.predict([request.text_input])
-                text_result = predictions[0]
-                text_result["inference_time_sec"] = round(inference_time, 4)
+                # Using Manas's new DistilBERT method
+                analysis = text_detector.analyze_message(request.text_input)
+                
+                # Map Manas's new keys to what your orchestrator expects
+                text_result = {
+                    "scam_confidence": analysis.get("scam_probability", 0.0),
+                    "ml_bert_score": analysis.get("heuristic_risk_score", 0.0),
+                    "red_flags": [f"NLP Flag: {analysis.get('risk_level', 'UNKNOWN')} Risk"]
+                }
         except Exception as exc:
             text_result = {
                 "scam_confidence": 0.0,
@@ -310,14 +356,20 @@ async def analyze_payload(request: AnalyzeRequest):
         except Exception:
             url_result = None
 
+    # 2. Process Images
     if request.image_base64:
         vision_result = await run_vision_analysis(request.image_base64)
 
+    # 3. Process Audio (New integration for Manas's Wav2Vec2 logic)
+    if request.audio_base64:
+        audio_result = await run_audio_analysis(request.audio_base64)
+
+    # 4. Fuse Modalities
     fusion_result = fusion_engine.compute_final_risk(
         text_score=to_text_score(text_result),
         url_score=to_url_score(url_result),
         image_score=to_vision_score(vision_result),
-        audio_score=None,
+        audio_score=to_audio_score(audio_result),
     )
 
     if request.force_high_risk:
