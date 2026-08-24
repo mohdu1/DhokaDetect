@@ -3,7 +3,7 @@ import os
 import mimetypes
 
 API_URL = "http://localhost:8001/analyze-audio"
-AUDIO_FILE = r"C:\Users\Manas Thaker\Downloads\scamtestaudio.mp3"
+AUDIO_FILE = r"C:\Users\Manas Thaker\Downloads\i_just_wannamove.mp4"
 
 def test_audio():
     if not os.path.exists(AUDIO_FILE):
