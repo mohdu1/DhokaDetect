@@ -1,18 +1,19 @@
 import os
 import shutil
-import io
 import subprocess
+import torch
 import librosa
 import numpy as np
 import uvicorn
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from transformers import AutoModelForAudioClassification, AutoFeatureExtractor
 from vision_service import VisionService
 
 app = FastAPI(
     title="DhokaDetect - ML Microservice",
-    description="Multi-Modal API for UPI Payment Forgery, Vision Deepfakes, and Audio Voice Clones",
-    version="2.4.0"
+    description="Multi-Modal API for UPI Payment Forgery, Vision Deepfakes, and Wav2Vec2 Audio Deepfake Detection",
+    version="3.0.0"
 )
 
 app.add_middleware(
@@ -26,8 +27,23 @@ app.add_middleware(
 UPLOAD_DIR = "temp_uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-print("Initializing Vision Service...")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Loading ML Microservices on {device}...")
+
+# 1. Initialize Vision Engine
 vision_service = VisionService()
+
+# 2. Initialize Hugging Face Audio Deepfake Transformer
+AUDIO_MODEL_NAME = "mo-thecreator/Deepfake-audio-detection"
+print(f"Loading Audio Transformer ({AUDIO_MODEL_NAME})...")
+try:
+    audio_feature_extractor = AutoFeatureExtractor.from_pretrained(AUDIO_MODEL_NAME)
+    audio_model = AutoModelForAudioClassification.from_pretrained(AUDIO_MODEL_NAME).to(device)
+    audio_model.eval()
+    print("✅ Audio Deepfake Model loaded successfully!")
+except Exception as e:
+    print(f"⚠️ Warning: Failed to load Audio Deepfake model ({e}). Will fallback to basic processing.")
+    audio_model = None
 
 def load_audio_signal(file_path: str):
     """
@@ -110,7 +126,7 @@ async def detect_media(
             except Exception:
                 pass
 
-# ----------------- UNIVERSAL AUDIO ENDPOINT -----------------
+# ----------------- AI AUDIO TRANSFORMER ENDPOINT -----------------
 @app.post("/analyze-audio")
 async def analyze_audio(file: UploadFile = File(...)):
     allowed_extensions = (
@@ -128,46 +144,38 @@ async def analyze_audio(file: UploadFile = File(...)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Robustly load audio signal from file/video
+        # 1. Load raw audio waveform at 16kHz
         y, sr = load_audio_signal(file_path)
-        
-        # 1. Spectral Centroid
-        centroids = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
-        centroid_mean = float(np.mean(centroids))
-        centroid_std = float(np.std(centroids))
-        
-        # 2. Pitch Jitter
-        f0, voiced_flag, voiced_probs = librosa.pyin(
-            y, 
-            fmin=librosa.note_to_hz('C2'), 
-            fmax=librosa.note_to_hz('C7')
-        )
-        
-        f0_voiced = f0[~np.isnan(f0)]
-        
-        if len(f0_voiced) > 1:
-            jitter = float(np.mean(np.abs(np.diff(f0_voiced))) / np.mean(f0_voiced))
-        else:
-            jitter = 0.0
 
-        # Risk Scoring
-        risk_score = 0.0
-        if jitter < 0.015: 
-            risk_score += 0.4
-        if centroid_std < 400: 
-            risk_score += 0.4
-            
-        return {
-            "filename": file.filename,
-            "features": {
-                "spectral_centroid_mean": centroid_mean,
-                "spectral_centroid_std": centroid_std,
-                "pitch_jitter": jitter
-            },
-            "risk_score": round(risk_score, 2),
-            "verdict": "Likely AI" if risk_score >= 0.7 else "Suspicious" if risk_score >= 0.4 else "Human"
-        }
-        
+        if audio_model is not None:
+            # 2. Extract Wav2Vec2 features and run Inference
+            inputs = audio_feature_extractor(
+                y, 
+                sampling_rate=16000, 
+                return_tensors="pt", 
+                padding=True
+            )
+            inputs = {k: v.to(device) for k, v in inputs.items()}
+
+            with torch.no_grad():
+                logits = audio_model(**inputs).logits
+                probs = torch.nn.functional.softmax(logits, dim=-1)[0]
+
+            # Probabilities mapping: Class 0 vs Class 1 depending on model head output
+            # For this Wav2Vec2 model head: index 1 is AI/Fake, index 0 is Real/Human
+            ai_probability = round(float(probs[1].item()), 4)
+            human_probability = round(float(probs[0].item()), 4)
+
+            return {
+                "filename": file.filename,
+                "ai_voice_probability": ai_probability,
+                "human_voice_probability": human_probability,
+                "risk_score": ai_probability,
+                "verdict": "Likely AI / Voice Clone" if ai_probability >= 0.50 else "Human Speech"
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Audio Deepfake model is not loaded.")
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Audio processing failed: {str(e)}")
         
