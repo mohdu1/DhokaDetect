@@ -1,0 +1,13 @@
+alert_key,lang,title,message,action
+digital_arrest,en,Digital Arrest Fraud Warning,Threats of CBI or Police arrest over phone/video calls are completely fraudulent. Cyber police never demand money transfer over call.,Disconnect immediately. Report the number to official cybercrime helpline 1930.
+digital_arrest,hi,डिजिटल अरेस्ट घोटाले की चेतावनी,फोन या वीडियो कॉल पर सीबीआई या पुलिस गिरफ्तारी की धमकी पूरी तरह फर्जी है। पुलिस कभी कॉल पर पैसे नहीं मांगती।,कॉल तुरंत काटें और साइबर क्राइम हेल्पलाइन 1930 पर रिपोर्ट दर्ज करें।
+digital_arrest,mr,डिजिटल अरेस्ट फसवणूक इशारा,फोन किंवा व्हिडिओ कॉलवरून सीबीआय किंवा पोलीस अटकेची धमकी पूर्णपणे बनावट आहे. पोलीस कधीही पैसे मागत नाहीत.,कॉल त्वरित कट करा आणि सायबर हेल्पलाइन १९३० वर तक्रार करा.
+utility_scam,en,Electricity Disconnection Scam,Electricity boards never disconnect power supply via instant SMS links or WhatsApp calls.,Do not pay using link provided in message. Check your official bill app.
+utility_scam,hi,बिजली बिल बकाया घोटाला,बिजली विभाग कभी भी अनधिकृत एसएमएस लिंक या व्हाट्सएप कॉल के जरिए लाइन काटने की धमकी नहीं देता।,अज्ञात लिंक से भुगतान न करें। आधिकारिक पोर्टल से बिल सत्यापित करें।
+utility_scam,mr,वीज बिल थकबाकी फसवणूक,महावितरण किंवा वीज मंडळ कधीही अज्ञातांच्या एसएमएस लिंकवरून वीज पुरवठा खंडित करत नाही.,संदिग्ध लिंकवर क्लिक करू नका. अधिकृत ॲपवरून माहिती घ्या.
+kyc_telecom,en,SIM / KYC Suspension Fraud,Telecom operators and TRAI never freeze SIM cards or accounts over urgent text links.,Verify account status through official telecom app or store.
+kyc_telecom,hi,सिम / केवाईसी निलंबन धोखाधड़ी,दूरसंचार विभाग या टेलीकॉम कंपनियां आपातकालीन एसएमएस लिंक के जरिए सिम ब्लॉक नहीं करती हैं।,आधिकारिक टेलीकॉम ऐप या नजदीकी स्टोर पर सत्यापन करें।
+kyc_telecom,mr,सिम / केवायसी ब्लॉक फसवणूक,टेलिकॉम कंपन्या किंवा ट्राय एसएमएस लिंकद्वारे सिम ब्लॉक करत नाहीत.,तुमच्या अधिकृत टेलिकॉम ॲपवरून तपासणी करा.
+high_risk_general,en,High Risk Scam Detected,This message contains patterns associated with known fraud attempts.,Do not share OTPs, PINs, or click any attached links.
+high_risk_general,hi,उच्च जोखिम वाला घोटाला पाया गया,इस संदेश में ज्ञात धोखाधड़ी से संबंधित पैटर्न पाए गए हैं।,ओटीपी, पिन या वित्तीय जानकारी किसी के साथ साझा न करें।
+high_risk_general,mr,उच्च फसवणूक धोका आढळला,या संदेशात फसवणुकीची लक्षणे आढळली आहेत.,ओटीपी किंवा बँक तपशील कोणालाही देऊ नका.
