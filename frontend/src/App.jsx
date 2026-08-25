@@ -1012,6 +1012,62 @@ function App() {
             </div>
 
 
+            {/* =================================================
+                LIVE THREAT FIELD
+                Subtle background visualization for the empty
+                right side of the single-page dashboard.
+            ================================================= */}
+
+            <div className="threat-field" aria-hidden="true">
+
+              <div className="threat-field-header">
+                <span className="threat-field-live">
+                  <span className="threat-field-dot" />
+                  LIVE THREAT FIELD
+                </span>
+
+                <span className="threat-field-ready">
+                  LOCAL ENGINE · READY
+                </span>
+              </div>
+
+              <div className="threat-radar">
+
+                <div className="threat-grid-plane" />
+
+                <div className="threat-orbit orbit-outer" />
+                <div className="threat-orbit orbit-middle" />
+                <div className="threat-orbit orbit-inner" />
+
+                <span className="threat-node node-1" />
+                <span className="threat-node node-2" />
+                <span className="threat-node node-3" />
+                <span className="threat-node node-4" />
+                <span className="threat-node node-5" />
+
+                <span className="threat-link link-1" />
+                <span className="threat-link link-2" />
+                <span className="threat-link link-3" />
+                <span className="threat-link link-4" />
+
+                <span className="threat-core">
+                  <span className="threat-core-inner" />
+                </span>
+
+                <span className="threat-scan-pulse" />
+
+              </div>
+
+              <div className="threat-field-footer">
+                <span>TEXT</span>
+                <span>URL</span>
+                <span>VISION</span>
+                <span>AUDIO</span>
+              </div>
+
+            </div>
+
+
             {/* INPUT ARENA */}
 
             <div
@@ -1025,6 +1081,23 @@ function App() {
               <div className="input-label">
                 {t.input}
               </div>
+
+
+              {loading && (
+                <div className="analysis-scan-overlay" aria-hidden="true">
+                  <div className="scan-lens">
+                    <div className="scan-lens-glass">
+                      <div className="scan-lens-highlight" />
+                      <div className="scan-lens-refraction" />
+                      <div className="scan-lens-sweep" />
+                    </div>
+                    <div className="scan-lens-rim rim-outer" />
+                    <div className="scan-lens-rim rim-inner" />
+                    <div className="scan-lens-handle" />
+                    <div className="scan-lens-shadow" />
+                  </div>
+                </div>
+              )}
 
 
               <textarea
