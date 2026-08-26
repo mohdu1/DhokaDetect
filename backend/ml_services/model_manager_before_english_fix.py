@@ -88,13 +88,13 @@ class LocalScamDetector:
             r"à¤¤à¥à¤°à¤‚à¤¤",
             r"à¤œà¤²à¥à¤¦à¥€",
             r"à¤…à¤­à¥€",
-            r"\d+\s*घंटे\s*à¤®à¥‡à¤‚",
-            r"24\s*घंटे\s*à¤®à¥‡à¤‚",
-            r"30\s*मिनट\s*à¤®à¥‡à¤‚",
+            r"\d+\s*à¤˜à¤‚à¤Ÿà¥‡\s*à¤®à¥‡à¤‚",
+            r"24\s*à¤˜à¤‚à¤Ÿà¥‡\s*à¤®à¥‡à¤‚",
+            r"30\s*à¤®à¤¿à¤¨à¤Ÿ\s*à¤®à¥‡à¤‚",
 
             # Marathi urgency
             r"à¤¤à¤¾à¤¤à¥à¤•à¤¾à¤³",
-            r"लगेच",
+            r"à¤²à¤—à¥‡à¤š",
             r"à¤¤à¥à¤µà¤°à¤¿à¤¤",
         ]
 
@@ -107,18 +107,18 @@ class LocalScamDetector:
             r"\bconnection\b.{0,50}\bdisconnected\b",
 
             # Hindi / Devanagari account threats
-            r"अकाउंट.{0,40}à¤¬à¥à¤²à¥‰à¤•",
-            r"अकाउंट.{0,40}बंद",
-            r"खाता.{0,40}बंद",
-            r"खाता.{0,40}à¤¬à¥à¤²à¥‰à¤•",
-            r"खाता.{0,40}बंद\s+हो\s+à¤œà¤¾à¤à¤—à¤¾",
-            r"अकाउंट.{0,40}à¤¬à¥à¤²à¥‰à¤•\s+होà¤¨à¥‡\s+à¤µà¤¾à¤²à¤¾\s+है",
+            r"à¤…à¤•à¤¾à¤‰à¤‚à¤Ÿ.{0,40}à¤¬à¥à¤²à¥‰à¤•",
+            r"à¤…à¤•à¤¾à¤‰à¤‚à¤Ÿ.{0,40}à¤¬à¤‚à¤¦",
+            r"à¤–à¤¾à¤¤à¤¾.{0,40}à¤¬à¤‚à¤¦",
+            r"à¤–à¤¾à¤¤à¤¾.{0,40}à¤¬à¥à¤²à¥‰à¤•",
+            r"à¤–à¤¾à¤¤à¤¾.{0,40}à¤¬à¤‚à¤¦\s+à¤¹à¥‹\s+à¤œà¤¾à¤à¤—à¤¾",
+            r"à¤…à¤•à¤¾à¤‰à¤‚à¤Ÿ.{0,40}à¤¬à¥à¤²à¥‰à¤•\s+à¤¹à¥‹à¤¨à¥‡\s+à¤µà¤¾à¤²à¤¾\s+à¤¹à¥ˆ",
 
             # Marathi account threats
-            r"खाते.{0,40}बंद",
-            r"खाते.{0,40}à¤¬à¥à¤²à¥‰à¤•",
-            r"खाते.{0,40}बंद\s+होà¤ˆà¤²",
-            r"खाते.{0,40}बंद\s+होà¤£à¤¾à¤°",
+            r"à¤–à¤¾à¤¤à¥‡.{0,40}à¤¬à¤‚à¤¦",
+            r"à¤–à¤¾à¤¤à¥‡.{0,40}à¤¬à¥à¤²à¥‰à¤•",
+            r"à¤–à¤¾à¤¤à¥‡.{0,40}à¤¬à¤‚à¤¦\s+à¤¹à¥‹à¤ˆà¤²",
+            r"à¤–à¤¾à¤¤à¥‡.{0,40}à¤¬à¤‚à¤¦\s+à¤¹à¥‹à¤£à¤¾à¤°",
         ]
 
         self.otp_pin_patterns = [
@@ -128,9 +128,9 @@ class LocalScamDetector:
             r"\bpin\b.{0,20}\b(?:share|enter|provide|confirm)\b",
 
             # Hindi / Marathi credential actions
-            r"otp.{0,30}(?:à¤¦à¤°à¥à¤œ|डालें|डालो|à¤­à¥‡à¤œà¥‡à¤‚|शेयर|वेरिफाई)",
-            r"upi\s*pin.{0,30}(?:à¤¦à¤°à¥à¤œ|डालें|डालो|दें|à¤¦à¥à¤¯à¤¾|à¤­à¥‡à¤œà¥‡à¤‚|शेयर)",
-            r"(?:otp|upi\s*pin).{0,30}दें",
+            r"otp.{0,30}(?:à¤¦à¤°à¥à¤œ|à¤¡à¤¾à¤²à¥‡à¤‚|à¤¡à¤¾à¤²à¥‹|à¤­à¥‡à¤œà¥‡à¤‚|à¤¶à¥‡à¤¯à¤°|à¤µà¥‡à¤°à¤¿à¤«à¤¾à¤ˆ)",
+            r"upi\s*pin.{0,30}(?:à¤¦à¤°à¥à¤œ|à¤¡à¤¾à¤²à¥‡à¤‚|à¤¡à¤¾à¤²à¥‹|à¤¦à¥‡à¤‚|à¤¦à¥à¤¯à¤¾|à¤­à¥‡à¤œà¥‡à¤‚|à¤¶à¥‡à¤¯à¤°)",
+            r"(?:otp|upi\s*pin).{0,30}à¤¦à¥‡à¤‚",
             r"(?:otp|upi\s*pin).{0,30}à¤¦à¥à¤¯à¤¾",
         ]
 
@@ -148,10 +148,10 @@ class LocalScamDetector:
             r"\bverification\s+details\b",
 
             # Hindi equivalents
-            r"आधार",
-            r"पैन",
-            r"à¤•à¤¾à¤°à¥à¤¡\s+(?:नंबर|विवरण)",
-            r"बैंक\s+(?:खाता|विवरण)",
+            r"à¤†à¤§à¤¾à¤°",
+            r"à¤ªà¥ˆà¤¨",
+            r"à¤•à¤¾à¤°à¥à¤¡\s+(?:à¤¨à¤‚à¤¬à¤°|à¤µà¤¿à¤µà¤°à¤£)",
+            r"à¤¬à¥ˆà¤‚à¤•\s+(?:à¤–à¤¾à¤¤à¤¾|à¤µà¤¿à¤µà¤°à¤£)",
         ]
 
         self.payment_request_patterns = [
@@ -162,15 +162,15 @@ class LocalScamDetector:
             r"\bregistration\s+charges?\b",
             r"\bdelivery\s+charges?\b",
             r"\brefundable\s+fee\b",
-            r"\bpay\s+[₹rs.]",
+            r"\bpay\s+[â‚¹rs.]",
 
             # Hindi payment requests
             r"à¤­à¥à¤—à¤¤à¤¾à¤¨",
-            r"पैसे\s+à¤­à¥‡à¤œ",
-            r"à¤¶à¥à¤²à¥à¤•\s+(?:दें|à¤œà¤®à¤¾)",
+            r"à¤ªà¥ˆà¤¸à¥‡\s+à¤­à¥‡à¤œ",
+            r"à¤¶à¥à¤²à¥à¤•\s+(?:à¤¦à¥‡à¤‚|à¤œà¤®à¤¾)",
 
             # Marathi payment requests
-            r"पैसे\s+(?:à¤ªà¤¾à¤ à¤µà¤¾|à¤­à¤°à¤¾|à¤¦à¥à¤¯à¤¾)",
+            r"à¤ªà¥ˆà¤¸à¥‡\s+(?:à¤ªà¤¾à¤ à¤µà¤¾|à¤­à¤°à¤¾|à¤¦à¥à¤¯à¤¾)",
         ]
 
         self.action_patterns = [
@@ -188,15 +188,15 @@ class LocalScamDetector:
             r"\blog\s+in\b",
 
             # Hindi actions
-            r"à¤•à¥à¤²à¤¿à¤•\s+करें",
-            r"वेरिफाई\s+करें",
-            r"अपडेट\s+करें",
-            r"à¤¦à¤°à¥à¤œ\s+करें",
-            r"à¤ªà¥à¤·à¥à¤Ÿà¤¿\s+करें",
+            r"à¤•à¥à¤²à¤¿à¤•\s+à¤•à¤°à¥‡à¤‚",
+            r"à¤µà¥‡à¤°à¤¿à¤«à¤¾à¤ˆ\s+à¤•à¤°à¥‡à¤‚",
+            r"à¤…à¤ªà¤¡à¥‡à¤Ÿ\s+à¤•à¤°à¥‡à¤‚",
+            r"à¤¦à¤°à¥à¤œ\s+à¤•à¤°à¥‡à¤‚",
+            r"à¤ªà¥à¤·à¥à¤Ÿà¤¿\s+à¤•à¤°à¥‡à¤‚",
 
             # Marathi actions
             r"à¤•à¥à¤²à¤¿à¤•\s+à¤•à¤°à¤¾",
-            r"अपडेट\s+à¤•à¤°à¤¾",
+            r"à¤…à¤ªà¤¡à¥‡à¤Ÿ\s+à¤•à¤°à¤¾",
             r"à¤¦à¥à¤¯à¤¾",
         ]
 
@@ -231,12 +231,12 @@ class LocalScamDetector:
             r"\breimbursement\b",
 
             # Hindi
-            r"रिफंड",
-            r"वापसी",
+            r"à¤°à¤¿à¤«à¤‚à¤¡",
+            r"à¤µà¤¾à¤ªà¤¸à¥€",
 
             # Marathi
-            r"परतावा",
-            r"à¤ªà¤°à¤¤\s+मिळ",
+            r"à¤ªà¤°à¤¤à¤¾à¤µà¤¾",
+            r"à¤ªà¤°à¤¤\s+à¤®à¤¿à¤³",
         ]
 
         # ---------------------------------------------------------
@@ -318,16 +318,16 @@ class LocalScamDetector:
             r"\bpaise\b.{0,30}\bdo\b",
 
             # Hindi / Devanagari
-            r"अकाउंट.{0,40}à¤¬à¥à¤²à¥‰à¤•",
-            r"अकाउंट.{0,40}बंद",
-            r"खाता.{0,40}बंद",
-            r"खाता.{0,40}à¤¬à¥à¤²à¥‰à¤•",
-            r"à¤¤à¥à¤°à¤‚à¤¤.{0,40}(?:वेरिफाई|अपडेट|à¤•à¥à¤²à¤¿à¤•)",
-            r"kyc.{0,40}(?:अपडेट|à¤ªà¥‚à¤°à¤¾)",
+            r"à¤…à¤•à¤¾à¤‰à¤‚à¤Ÿ.{0,40}à¤¬à¥à¤²à¥‰à¤•",
+            r"à¤…à¤•à¤¾à¤‰à¤‚à¤Ÿ.{0,40}à¤¬à¤‚à¤¦",
+            r"à¤–à¤¾à¤¤à¤¾.{0,40}à¤¬à¤‚à¤¦",
+            r"à¤–à¤¾à¤¤à¤¾.{0,40}à¤¬à¥à¤²à¥‰à¤•",
+            r"à¤¤à¥à¤°à¤‚à¤¤.{0,40}(?:à¤µà¥‡à¤°à¤¿à¤«à¤¾à¤ˆ|à¤…à¤ªà¤¡à¥‡à¤Ÿ|à¤•à¥à¤²à¤¿à¤•)",
+            r"kyc.{0,40}(?:à¤…à¤ªà¤¡à¥‡à¤Ÿ|à¤ªà¥‚à¤°à¤¾)",
             r"à¤²à¤¿à¤‚à¤•.{0,30}à¤•à¥à¤²à¤¿à¤•",
-            r"रिफंड.{0,50}(?:otp|upi\s*pin)",
-            r"otp.{0,50}(?:वेरिफाई|à¤¦à¤°à¥à¤œ)",
-            r"खाता\s+बंद\s+होà¤¨à¥‡\s+à¤¸à¥‡\s+à¤¬à¤šà¤¾à¤¨à¥‡",
+            r"à¤°à¤¿à¤«à¤‚à¤¡.{0,50}(?:otp|upi\s*pin)",
+            r"otp.{0,50}(?:à¤µà¥‡à¤°à¤¿à¤«à¤¾à¤ˆ|à¤¦à¤°à¥à¤œ)",
+            r"à¤–à¤¾à¤¤à¤¾\s+à¤¬à¤‚à¤¦\s+à¤¹à¥‹à¤¨à¥‡\s+à¤¸à¥‡\s+à¤¬à¤šà¤¾à¤¨à¥‡",
 
             # Marathi / Roman Marathi
             r"\bkhata\b.{0,60}\bband\b.{0,80}\bkyc\b",
@@ -344,14 +344,14 @@ class LocalScamDetector:
             r"\botp\b.{0,30}\bdya\b",
 
             # Marathi / Devanagari
-            r"खाते.{0,40}बंद",
-            r"खाते.{0,40}à¤¬à¥à¤²à¥‰à¤•",
+            r"à¤–à¤¾à¤¤à¥‡.{0,40}à¤¬à¤‚à¤¦",
+            r"à¤–à¤¾à¤¤à¥‡.{0,40}à¤¬à¥à¤²à¥‰à¤•",
             r"à¤¤à¤¾à¤¤à¥à¤•à¤¾à¤³",
-            r"लगेच",
-            r"परतावा.{0,50}(?:otp|upi\s*pin)",
-            r"रिफंड.{0,50}(?:otp|upi\s*pin)",
+            r"à¤²à¤—à¥‡à¤š",
+            r"à¤ªà¤°à¤¤à¤¾à¤µà¤¾.{0,50}(?:otp|upi\s*pin)",
+            r"à¤°à¤¿à¤«à¤‚à¤¡.{0,50}(?:otp|upi\s*pin)",
             r"(?:otp|upi\s*pin).{0,30}à¤¦à¥à¤¯à¤¾",
-            r"मिळà¤µà¤£à¥à¤¯à¤¾à¤¸à¤¾à¤ à¥€",
+            r"à¤®à¤¿à¤³à¤µà¤£à¥à¤¯à¤¾à¤¸à¤¾à¤ à¥€",
         ]
 
         # ---------------------------------------------------------
@@ -370,13 +370,14 @@ class LocalScamDetector:
                 r"(?:within|today|immediately|urgent|\d+\s*hours?)"
             ),
 
-            # KYC expiry + PAN/Aadhaar + urgency
+            # KYC expiry + PAN/Aadhaar + urgency, regardless of submit wording
             (
                 r"\bkyc\b.{0,100}(?:expired|incomplete|pending).{0,160}"
                 r"(?:pan|aadhaar).{0,120}"
                 r"(?:within|today|immediately|urgent|\d+\s*hours?)"
             ),
         ]
+
 
         self.strong_hindi_scam_patterns = [
             # Account block / closure + OTP
@@ -746,11 +747,6 @@ class LocalScamDetector:
         if not texts:
             return [], 0.0
 
-        # Normalize a single string into the expected batch format.
-        # This prevents character-by-character iteration such as "Y", "o", "u"...
-        if isinstance(texts, str):
-            texts = [texts]
-
         inputs = self.tokenizer(
             texts,
             return_tensors="pt",
@@ -819,15 +815,14 @@ class LocalScamDetector:
             else:
                 hybrid_scam_score = bert_scam_prob
 
-                        # -----------------------------------------------------
+            # -----------------------------------------------------
             # Regional heuristic confidence floor
             #
             # English DistilBERT can assign extremely low scam
-            # probabilities to regional scam messages even when
+            # probabilities to Devanagari scam messages even when
             # explicit scam combinations are detected.
             #
-            # Only decisive regional combinations receive the
-            # higher confidence floor.
+            # Only decisive regional combinations receive this floor.
             # -----------------------------------------------------
 
             if strong_regional_scam_signal:
@@ -839,15 +834,14 @@ class LocalScamDetector:
                 red_flags.append(
                     "Regional Scam Confidence Floor Applied"
                 )
+                if strong_scam_signal and not strong_regional_scam_signal:
+                    hybrid_scam_score = max(
+                        hybrid_scam_score,
+                         0.65
+                    )
 
-            elif strong_scam_signal:
-                hybrid_scam_score = max(
-                    hybrid_scam_score,
-                    0.65
-                )
-
-                red_flags.append(
-                    "Strong Scam Confidence Floor Applied"
+                    red_flags.append(
+                        "Strong Scam Confidence Floor Applied"
                 )
 
             # -----------------------------------------------------
@@ -866,24 +860,11 @@ class LocalScamDetector:
             # -----------------------------------------------------
 
             if legitimate_status_confirmation:
-                hybrid_scam_score *= 0.20
+                 hybrid_scam_score *= 0.20
 
-                # Remove generic scam indicators that are false
-                # positives in a completed official status message.
-                red_flags = [
-                    flag
-                    for flag in red_flags
-                    if flag not in {
-                        "Sensitive Information Request Detected",
-                        "Entity Impersonation / Verification Pattern Detected",
-                        "Strong Scam Confidence Floor Applied",
-                        "Regional Scam Confidence Floor Applied",
-                    }
-                ]
-
-                red_flags.append(
-                    "Legitimate Official Status Confirmation Detected"
-                )
+                 red_flags.append(
+                     "Legitimate Official Status Confirmation Detected"
+                 )
 
             # -----------------------------------------------------
             # General legitimate-context calibration
