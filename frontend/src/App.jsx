@@ -17,7 +17,7 @@ import "./App.css";
 ========================================================= */
 
 const API_URL =
-  "https://YOUR-BACKEND-TUNNEL.lhr.life/api/v1/analyze";
+  "http://127.0.0.1:8000/api/v2/analyze/multimodal";
 
 
 /* =========================================================
@@ -64,6 +64,7 @@ const translations = {
     local: "LOCAL",
     textUrl: "TEXT / URL",
     file: "FILE",
+    audioRecord: "VOICE RECORDING",
 
     noFlags:
       "No specific red flags returned.",
@@ -126,6 +127,7 @@ const translations = {
     local: "लोकल",
     textUrl: "टेक्स्ट / लिंक",
     file: "फाइल",
+    audioRecord: "ध्वनि रिकॉर्डिंग",
 
     noFlags:
       "कोई विशेष संदिग्ध संकेत नहीं मिला।",
@@ -188,6 +190,7 @@ const translations = {
     local: "लोकल",
     textUrl: "टेक्स्ट / लिंक",
     file: "फाइल",
+    audioRecord: "आवाज रेकॉर्डिंग",
 
     noFlags:
       "कोणतेही विशेष संशयास्पद संकेत आढळले नाहीत.",
@@ -334,7 +337,7 @@ const FLAG_DICTIONARY = {
    AUDIO LOGO
 ========================================================= */
 
-function AudioLogo({ language }) {
+function AudioLogo({ language, recording }) {
   const audioText = {
     English: "AUDIO",
     Hindi: "ऑडियो",
@@ -345,7 +348,7 @@ function AudioLogo({ language }) {
     <div className="audio-logo">
 
       <div className="audio-logo-word">
-        {audioText[language]}
+        {recording ? "RECORDING..." : audioText[language]}
       </div>
 
       <svg
@@ -521,6 +524,7 @@ function getRiskClass(result) {
 function getScore(result) {
 
   let score =
+    result?.overall_risk_score ??
     result?.risk_score ??
     result?.score ??
     result?.riskScore ??
@@ -642,6 +646,11 @@ function App() {
   const [file, setFile] =
     useState(null);
 
+  // New states for Audio Recording via MediaRecorder
+  const [recordedAudioBase64, setRecordedAudioBase64] = useState(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
   const [language, setLanguage] =
     useState("English");
 
@@ -689,6 +698,45 @@ function App() {
       setResult(null);
     };
 
+  /* =======================================================
+     AUDIO RECORDING LOGIC
+  ======================================================= */
+  const toggleRecording = async () => {
+    if (recording) {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+      }
+      setRecording(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorderRef.current = new MediaRecorder(stream);
+        audioChunksRef.current = [];
+
+        mediaRecorderRef.current.ondataavailable = (event) => {
+          if (event.data.size > 0) audioChunksRef.current.push(event.data);
+        };
+
+        mediaRecorderRef.current.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: "audio/wav" });
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = () => {
+            const b64 = reader.result.toString().split(",")[1];
+            setRecordedAudioBase64(b64);
+          };
+          stream.getTracks().forEach((track) => track.stop());
+        };
+
+        mediaRecorderRef.current.start();
+        setRecording(true);
+        setError("");
+      } catch (err) {
+        setError("Microphone access denied or unsupported.");
+      }
+    }
+  };
+
 
   /* =======================================================
      RESET
@@ -698,20 +746,25 @@ function App() {
 
     setInput("");
     setFile(null);
+    setRecordedAudioBase64(null);
     setResult(null);
     setError("");
     setLoading(false);
+    
+    if (recording && mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
     setRecording(false);
   };
 
 
   /* =======================================================
-     ANALYSE
+     ANALYSE - REAL BACKEND FETCH
   ======================================================= */
 
   const handleAnalyse = async () => {
-    if (!input.trim() && !file) {
-      setError("Please enter a message, link or upload a file.");
+    if (!input.trim() && !file && !recordedAudioBase64) {
+      setError("Please enter a message, link, file, or voice recording.");
       return;
     }
 
@@ -719,41 +772,64 @@ function App() {
     setError("");
     setResult(null);
 
-    // TEMPORARY FRONTEND MOCK — remove before pushing.
-    // Simulates a 3-second backend response so the result UI
-    // can be tested without the backend/tunnel running.
-    setTimeout(() => {
-      const mockData = {
-        overall_risk_score: 92,
-        risk_level: "HIGH",
-        red_flags: [
-          {
-            indicator: "Visual Manipulation",
-            description:
-              "Visual / Font Inconsistency Detected in Receipt",
-          },
-          {
-            indicator: "Impersonation",
-            description:
-              "ENTITY_UTILITY_IMPERSONATION_PATTE",
-          },
-        ],
-        breakdown: {
-          text: {},
-          url: {},
-          visual: {},
-        },
-      };
+    try {
+      let image_base64 = null;
+      let audio_base64 = recordedAudioBase64 || null;
 
-      setResult(mockData);
+      // Handle file conversion to base64 if a file is present
+      if (file) {
+        const base64String = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            // Strip the metadata prefix (e.g., "data:image/jpeg;base64,")
+            const resultString = reader.result.toString();
+            resolve(resultString.split(',')[1]);
+          };
+          reader.onerror = error => reject(error);
+        });
+
+        // Fixed video handling inclusion
+        if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+          image_base64 = base64String;
+        } else if (file.type.startsWith('audio/')) {
+          audio_base64 = base64String;
+        }
+      }
+
+      // Execute the real call to the Python API
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text_input: input.trim() || null,
+          image_base64: image_base64,
+          audio_base64: audio_base64,
+          force_high_risk: false
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
+      
+    } catch (err) {
+      console.error("Backend connection failed:", err);
+      setError(t.systemError || "Unable to analyse the content. Please check the backend connection.");
+    } finally {
       setLoading(false);
-    }, 3000);
+    }
   };
 
 
   /* =======================================================
      RESULT DATA
-  ======================================================= */
+  ====================================================== */
 
   const score =
     result
@@ -831,7 +907,7 @@ function App() {
 
 
       {/* =================================================
-          HEADER
+         HEADER
       ================================================= */}
 
       <header className="topbar">
@@ -970,7 +1046,7 @@ function App() {
 
 
       {/* =================================================
-          MAIN
+         MAIN
       ================================================= */}
 
       <section
@@ -1119,9 +1195,9 @@ function App() {
               />
 
 
-              {/* FILE CHIP */}
+              {/* FILE CHIP - Modified to include audio recording */}
 
-              {file && (
+              {(file || recordedAudioBase64) && (
 
                 <div className="file-chip">
 
@@ -1130,13 +1206,14 @@ function App() {
                   />
 
                   <span>
-                    {file.name}
+                    {file ? file.name : "Recorded Voice Note (.wav)"}
                   </span>
 
                   <button
-                    onClick={() =>
-                      setFile(null)
-                    }
+                    onClick={() => {
+                      setFile(null);
+                      setRecordedAudioBase64(null);
+                    }}
 
                     disabled={
                       loading
@@ -1210,11 +1287,7 @@ function App() {
                         : ""
                     }`}
 
-                    onClick={() =>
-                      setRecording(
-                        !recording
-                      )
-                    }
+                    onClick={toggleRecording}
 
                     title="Voice input"
                   >
@@ -1223,6 +1296,7 @@ function App() {
                       language={
                         language
                       }
+                      recording={recording}
                     />
 
                   </button>
@@ -1463,6 +1537,8 @@ function App() {
 
                       {file
                         ? t.file
+                        : recordedAudioBase64 
+                        ? t.audioRecord 
                         : t.textUrl}
 
                     </strong>
