@@ -81,6 +81,13 @@ const translations = {
     noMajorSignals:
       "No major warning signals detected.",
 
+    analysedEvidence:
+      "DhokaDetect analysed the available evidence and identified the signals shown below.",
+
+    footerEngine: "DHOKADETECT ENGINE",
+
+    footerStack: "FASTAPI · NLP · URL · VISION · FUSION",
+
     footer:
       "DETECT · EXPLAIN · PROTECT",
 
@@ -143,6 +150,13 @@ const translations = {
 
     noMajorSignals:
       "कोई बड़ा चेतावनी संकेत नहीं मिला।",
+
+    analysedEvidence:
+      "धोकाडिटेक्ट ने उपलब्ध जानकारी की जाँच की और नीचे दिए गए संकेत पाए।",
+
+    footerEngine: "धोकाडिटेक्ट इंजन",
+
+    footerStack: "फास्टएपीआई · एनएलपी · लिंक · विज़न · फ्यूज़न",
 
     footer:
       "पहचानें · समझें · सुरक्षित रहें",
@@ -207,6 +221,13 @@ const translations = {
     noMajorSignals:
       "कोणतेही मोठे धोक्याचे संकेत आढळले नाहीत.",
 
+    analysedEvidence:
+      "धोकाडिटेक्टने उपलब्ध माहितीची तपासणी केली आणि खालील संकेत ओळखले.",
+
+    footerEngine: "धोकाडिटेक्ट इंजिन",
+
+    footerStack: "फास्टएपीआय · एनएलपी · लिंक · व्हिजन · फ्यूजन",
+
     footer:
       "ओळखा · समजून घ्या · सुरक्षित रहा",
 
@@ -222,113 +243,159 @@ const translations = {
 
 const FLAG_DICTIONARY = {
   FAKE_URGENCY_PRESSURE_TACTICS_DET: {
-    title: "Urgency pressure",
-
-    explanation:
-      "The message creates artificial time pressure to make you act quickly.",
-
-    action:
-      "Pause and verify the request through an official source before paying or sharing information.",
+    English: { title: "Urgency pressure", explanation: "The message creates artificial time pressure to make you act quickly.", action: "Pause and verify the request through an official source before paying or sharing information." },
+    Hindi: { title: "Urgency pressure", explanation: "The message creates artificial time pressure to make you act quickly.", action: "Pause and verify the request through an official source before paying or sharing information." },
+    Marathi: { title: "Urgency pressure", explanation: "The message creates artificial time pressure to make you act quickly.", action: "Pause and verify the request through an official source before paying or sharing information." },
   },
 
   URGENCY_PRESSURE: {
-    title: "Urgency pressure",
-
-    explanation:
-      "The sender is pushing you to act immediately.",
-
-    action:
-      "Do not rush. Verify the request independently.",
+    English: { title: "Urgency pressure", explanation: "The sender is pushing you to act immediately.", action: "Do not rush. Verify the request independently." },
+    Hindi: { title: "Urgency pressure", explanation: "The sender is pushing you to act immediately.", action: "Do not rush. Verify the request independently." },
+    Marathi: { title: "Urgency pressure", explanation: "The sender is pushing you to act immediately.", action: "Do not rush. Verify the request independently." },
   },
 
   NO_HTTPS: {
-    title: "Unsecured connection",
-
-    explanation:
-      "The link does not use a secure HTTPS connection.",
-
-    action:
-      "Avoid entering passwords, OTPs or payment details.",
+    English: { title: "Unsecured connection", explanation: "The link does not use a secure HTTPS connection.", action: "Avoid entering passwords, OTPs or payment details." },
+    Hindi: { title: "Unsecured connection", explanation: "The link does not use a secure HTTPS connection.", action: "Avoid entering passwords, OTPs or payment details." },
+    Marathi: { title: "Unsecured connection", explanation: "The link does not use a secure HTTPS connection.", action: "Avoid entering passwords, OTPs or payment details." },
   },
 
   SUSPICIOUS_DOMAIN: {
-    title: "Suspicious domain",
-
-    explanation:
-      "The website address shows characteristics associated with risky domains.",
-
-    action:
-      "Do not open the link. Visit the organisation's official website directly.",
+    English: { title: "Suspicious domain", explanation: "The website address shows characteristics associated with risky domains.", action: "Do not open the link. Visit the organisation's official website directly." },
+    Hindi: { title: "Suspicious domain", explanation: "The website address shows characteristics associated with risky domains.", action: "Do not open the link. Visit the organisation's official website directly." },
+    Marathi: { title: "Suspicious domain", explanation: "The website address shows characteristics associated with risky domains.", action: "Do not open the link. Visit the organisation's official website directly." },
   },
 
   TYPOSQUATTING: {
-    title: "Possible fake website",
-
-    explanation:
-      "The domain appears designed to resemble a legitimate brand.",
-
-    action:
-      "Check the exact domain before entering any information.",
+    English: { title: "Possible fake website", explanation: "The domain appears designed to resemble a legitimate brand.", action: "Check the exact domain before entering any information." },
+    Hindi: { title: "Possible fake website", explanation: "The domain appears designed to resemble a legitimate brand.", action: "Check the exact domain before entering any information." },
+    Marathi: { title: "Possible fake website", explanation: "The domain appears designed to resemble a legitimate brand.", action: "Check the exact domain before entering any information." },
   },
 
   BRAND_IMPERSONATION: {
-    title: "Brand impersonation",
-
-    explanation:
-      "The message appears to imitate a known organisation or service.",
-
-    action:
-      "Verify the message using the organisation's official contact details.",
+    English: { title: "Brand impersonation", explanation: "The message appears to imitate a known organisation or service.", action: "Verify the message using the organisation's official contact details." },
+    Hindi: { title: "Brand impersonation", explanation: "The message appears to imitate a known organisation or service.", action: "Verify the message using the organisation's official contact details." },
+    Marathi: { title: "Brand impersonation", explanation: "The message appears to imitate a known organisation or service.", action: "Verify the message using the organisation's official contact details." },
   },
 
   PAYMENT_REQUEST: {
-    title: "Payment request",
-
-    explanation:
-      "The content asks you to make a payment or transfer money.",
-
-    action:
-      "Do not pay until the request has been independently verified.",
+    English: {
+      title: "Payment request",
+      explanation: "The content asks you to make a payment or transfer money.",
+      action: "Do not pay until the request has been independently verified.",
+    },
+    Hindi: {
+      title: "भुगतान अनुरोध",
+      explanation: "संदेश आपसे भुगतान या पैसे भेजने के लिए कहता है।",
+      action: "स्वतंत्र रूप से सत्यापित किए बिना भुगतान न करें।",
+    },
+    Marathi: {
+      title: "पेमेंटची विनंती",
+      explanation: "संदेश तुम्हाला पेमेंट किंवा पैसे पाठवण्यास सांगतो.",
+      action: "स्वतंत्रपणे पडताळणी केल्याशिवाय पेमेंट करू नका.",
+    },
   },
 
   KYC: {
-    title: "KYC request",
-
-    explanation:
-      "The message asks for identity or account verification.",
-
-    action:
-      "Never share OTPs or sensitive documents through an unsolicited link.",
+    English: { title: "KYC request", explanation: "The message asks for identity or account verification.", action: "Never share OTPs or sensitive documents through an unsolicited link." },
+    Hindi: { title: "KYC request", explanation: "The message asks for identity or account verification.", action: "Never share OTPs or sensitive documents through an unsolicited link." },
+    Marathi: { title: "KYC request", explanation: "The message asks for identity or account verification.", action: "Never share OTPs or sensitive documents through an unsolicited link." },
   },
 
   OTP: {
-    title: "OTP request",
-
-    explanation:
-      "The content refers to a one-time password or verification code.",
-
-    action:
-      "Never share an OTP with another person.",
+    English: {
+      title: "OTP request",
+      explanation: "The content refers to a one-time password or verification code.",
+      action: "Never share an OTP with another person.",
+    },
+    Hindi: {
+      title: "OTP का अनुरोध",
+      explanation: "संदेश वन-टाइम पासवर्ड या सत्यापन कोड का उल्लेख करता है।",
+      action: "किसी अन्य व्यक्ति के साथ OTP साझा न करें।",
+    },
+    Marathi: {
+      title: "OTP ची विनंती",
+      explanation: "संदेश वन-टाइम पासवर्ड किंवा पडताळणी कोडचा उल्लेख करतो.",
+      action: "OTP कधीही दुसऱ्या व्यक्तीसोबत शेअर करू नका.",
+    },
   },
 
   FAKE_PAYMENT_RECEIPT: {
-    title: "Possible fake payment proof",
-
-    explanation:
-      "The payment evidence contains inconsistencies that may indicate manipulation.",
-
-    action:
-      "Verify the transaction directly inside your banking or payment app.",
+    English: { title: "Possible fake payment proof", explanation: "The payment evidence contains inconsistencies that may indicate manipulation.", action: "Verify the transaction directly inside your banking or payment app." },
+    Hindi: { title: "Possible fake payment proof", explanation: "The payment evidence contains inconsistencies that may indicate manipulation.", action: "Verify the transaction directly inside your banking or payment app." },
+    Marathi: { title: "Possible fake payment proof", explanation: "The payment evidence contains inconsistencies that may indicate manipulation.", action: "Verify the transaction directly inside your banking or payment app." },
   },
 
   SUSPICIOUS_LINK: {
-    title: "Suspicious link",
+    English: {
+      title: "Suspicious link",
+      explanation: "The submitted content contains a link with potentially risky characteristics.",
+      action: "Do not click it. Open the official service manually instead.",
+    },
+    Hindi: {
+      title: "संदिग्ध लिंक",
+      explanation: "सामग्री में संभावित रूप से जोखिम वाला लिंक है।",
+      action: "लिंक पर क्लिक न करें। आधिकारिक सेवा स्वयं खोलें।",
+    },
+    Marathi: {
+      title: "संशयास्पद लिंक",
+      explanation: "सामग्रीमध्ये संभाव्य धोकादायक लिंक आहे.",
+      action: "लिंकवर क्लिक करू नका. अधिकृत सेवा स्वतः उघडा.",
+    },
+  },
 
-    explanation:
-      "The submitted content contains a link with potentially risky characteristics.",
+  URGENT_ACTION_REQUEST: {
+    English: { title: "Urgent action request", explanation: "The message combines pressure with a request to act.", action: "Pause and verify the sender through an official channel." },
+    Hindi: { title: "तुरंत कार्रवाई का अनुरोध", explanation: "संदेश दबाव बनाकर आपसे कार्रवाई करने को कहता है।", action: "रुकें और आधिकारिक माध्यम से भेजने वाले की पुष्टि करें।" },
+    Marathi: { title: "तातडीच्या कृतीची विनंती", explanation: "संदेश दबाव टाकून तुम्हाला कृती करण्यास सांगतो.", action: "थांबा आणि अधिकृत माध्यमातून पाठवणाऱ्याची पडताळणी करा." },
+  },
 
-    action:
-      "Do not click it. Open the official service manually instead.",
+  OTP_PIN_REQUEST: {
+    English: { title: "OTP or PIN request", explanation: "The content asks for a one-time password or PIN.", action: "Never share an OTP or PIN with anyone." },
+    Hindi: { title: "OTP या PIN का अनुरोध", explanation: "सामग्री वन-टाइम पासवर्ड या PIN माँगती है।", action: "OTP या PIN किसी के साथ साझा न करें।" },
+    Marathi: { title: "OTP किंवा PIN ची विनंती", explanation: "सामग्री वन-टाइम पासवर्ड किंवा PIN मागते.", action: "OTP किंवा PIN कोणासोबतही शेअर करू नका." },
+  },
+
+  SENSITIVE_INFORMATION_REQUEST: {
+    English: { title: "Sensitive information request", explanation: "The message asks for personal, identity, or account information.", action: "Do not share sensitive details until the request is independently verified." },
+    Hindi: { title: "संवेदनशील जानकारी का अनुरोध", explanation: "संदेश व्यक्तिगत, पहचान या खाते की जानकारी माँगता है।", action: "स्वतंत्र पुष्टि के बिना संवेदनशील जानकारी साझा न करें।" },
+    Marathi: { title: "संवेदनशील माहितीची विनंती", explanation: "संदेश वैयक्तिक, ओळख किंवा खात्याची माहिती मागतो.", action: "स्वतंत्र पडताळणीशिवाय संवेदनशील माहिती शेअर करू नका." },
+  },
+
+  SUSPICIOUS_OR_UNOFFICIAL_LINK_DETECTED: {
+    English: { title: "Suspicious or unofficial link", explanation: "The content contains a link that may not belong to the claimed service.", action: "Do not open it. Visit the official website manually." },
+    Hindi: { title: "संदिग्ध या अनधिकृत लिंक", explanation: "सामग्री में ऐसी लिंक है जो बताए गए संगठन की नहीं हो सकती।", action: "इसे न खोलें। आधिकारिक वेबसाइट स्वयं खोलें।" },
+    Marathi: { title: "संशयास्पद किंवा अनधिकृत लिंक", explanation: "सामग्रीमध्ये सांगितलेल्या सेवेशी संबंधित नसलेली लिंक असू शकते.", action: "लिंक उघडू नका. अधिकृत वेबसाइट स्वतः उघडा." },
+  },
+
+  URGENT_PAYMENT_REQUEST_DETECTED: {
+    English: { title: "Urgent payment request", explanation: "The message pressures you to make a payment quickly.", action: "Do not pay until the request is independently verified." },
+    Hindi: { title: "तुरंत भुगतान का अनुरोध", explanation: "संदेश आपसे जल्दी भुगतान करने का दबाव बनाता है।", action: "स्वतंत्र पुष्टि के बिना भुगतान न करें।" },
+    Marathi: { title: "तातडीच्या पेमेंटची विनंती", explanation: "संदेश तुमच्यावर लवकर पेमेंट करण्यासाठी दबाव टाकतो.", action: "स्वतंत्र पडताळणीशिवाय पेमेंट करू नका." },
+  },
+
+  HUMAN_VOICE_SIGNAL: {
+    English: { title: "Human voice signal", explanation: "The recording was analyzed and no synthetic-voice anomaly was detected.", action: "This is an informational result, not a guarantee of identity or safety." },
+    Hindi: { title: "मानवी आवाज का संकेत", explanation: "रिकॉर्डिंग की जाँच हुई और कृत्रिम आवाज़ की कोई असामान्यता नहीं मिली।", action: "यह केवल जानकारी है, पहचान या सुरक्षा की गारंटी नहीं।" },
+    Marathi: { title: "मानवी आवाजेचा संकेत", explanation: "रेकॉर्डिंगची तपासणी झाली आणि कृत्रिम आवाजाची असामान्यता आढळली नाही.", action: "हा माहितीपर निकाल आहे; ओळख किंवा सुरक्षिततेची हमी नाही." },
+  },
+
+  AI_SYNTHETIC_VOICE_FLAGGED: {
+    English: { title: "Possible synthetic voice", explanation: "The audio contains patterns associated with an AI-generated voice.", action: "Treat requests from this recording cautiously and verify the speaker independently." },
+    Hindi: { title: "संभावित कृत्रिम आवाज", explanation: "ऑडियो में AI-निर्मित आवाज़ से जुड़े पैटर्न मिले हैं।", action: "इस रिकॉर्डिंग के अनुरोधों में सावधानी बरतें और बोलने वाले की स्वतंत्र पुष्टि करें।" },
+    Marathi: { title: "संभाव्य कृत्रिम आवाज", explanation: "ऑडिओमध्ये AI-निर्मित आवाजाशी संबंधित नमुने आढळले.", action: "या रेकॉर्डिंगमधील विनंत्यांबाबत सावध रहा आणि बोलणाऱ्याची स्वतंत्र पडताळणी करा." },
+  },
+
+  VISUAL_FONT_INCONSISTENCY_DETECTED_IN_RECEIPT: {
+    English: { title: "Receipt font inconsistency", explanation: "The receipt contains visual inconsistencies that may indicate editing.", action: "Verify the transaction inside your banking or payment app." },
+    Hindi: { title: "रसीद के फ़ॉन्ट में असंगति", explanation: "रसीद में दृश्य असंगतियाँ हैं जो संपादन का संकेत दे सकती हैं।", action: "बैंकिंग या भुगतान ऐप में लेनदेन की पुष्टि करें।" },
+    Marathi: { title: "पावतीच्या फॉन्टमध्ये विसंगती", explanation: "पावतीमध्ये संपादन दर्शवणाऱ्या दृश्य विसंगती आढळतात.", action: "बँकिंग किंवा पेमेंट ॲपमध्ये व्यवहाराची पडताळणी करा." },
+  },
+
+  TAMPERED_PIXEL_BOUNDARY_ARTIFACTS: {
+    English: { title: "Receipt pixel artifacts", explanation: "Pixel boundaries in the receipt may indicate image manipulation.", action: "Verify the transaction directly in the official payment app." },
+    Hindi: { title: "रसीद में पिक्सेल असंगतियाँ", explanation: "रसीद की पिक्सेल सीमाएँ छेड़छाड़ का संकेत दे सकती हैं।", action: "आधिकारिक भुगतान ऐप में लेनदेन की पुष्टि करें।" },
+    Marathi: { title: "पावतीतील पिक्सेल विसंगती", explanation: "पावतीच्या पिक्सेल सीमा छेडछाडीचा संकेत देऊ शकतात.", action: "अधिकृत पेमेंट ॲपमध्ये व्यवहाराची थेट पडताळणी करा." },
   },
 };
 
@@ -371,7 +438,7 @@ function AudioLogo({ language, recording }) {
    VISUAL LOGO
 ========================================================= */
 
-function VisualLogo({ language, file }) {
+function VisualLogo({ language }) {
 
   const visualText = {
     English: "IMAGE / VIDEO",
@@ -415,48 +482,54 @@ function VisualLogo({ language, file }) {
    FLAG FORMATTER
 ========================================================= */
 
-function formatFlag(flag) {
+function formatFlag(flag, language = "English") {
+
+  const genericCopy = {
+    English: {
+      title: "Suspicious signal",
+      explanation: "The detection engine identified an unusual pattern in the submitted content.",
+      action: "Verify the information through an official and trusted source before acting.",
+    },
+    Hindi: {
+      title: "संदिग्ध संकेत",
+      explanation: "जाँच इंजन ने भेजी गई सामग्री में एक असामान्य पैटर्न पाया।",
+      action: "कार्रवाई करने से पहले आधिकारिक और विश्वसनीय स्रोत से जानकारी की पुष्टि करें।",
+    },
+    Marathi: {
+      title: "संशयास्पद संकेत",
+      explanation: "तपासणी इंजिनने सादर केलेल्या सामग्रीमध्ये असामान्य नमुना ओळखला.",
+      action: "कृती करण्यापूर्वी अधिकृत आणि विश्वसनीय स्रोताकडून माहितीची पडताळणी करा.",
+    },
+  };
 
   if (!flag) {
-    return {
-      title: "Suspicious signal",
-
-      explanation:
-        "The system detected an unusual pattern.",
-
-      action:
-        "Verify the information before taking action.",
-    };
+    return genericCopy[language] || genericCopy.English;
   }
 
   const cleanFlag = String(flag)
     .trim()
-    .replace(/^["']|["']$/g, "");
-
-  if (FLAG_DICTIONARY[cleanFlag]) {
-    return FLAG_DICTIONARY[cleanFlag];
-  }
+    .replace(/^['"]|['"]$/g, "")
+    .replace(/\s*\(Evidence:.*$/i, "")
+    .trim();
 
   const normalized =
     cleanFlag.toUpperCase();
 
-  if (FLAG_DICTIONARY[normalized]) {
-    return FLAG_DICTIONARY[normalized];
+  if (normalized) {
+    for (const key of Object.keys(FLAG_DICTIONARY)) {
+      const normalizedKey = key.toUpperCase();
+
+      if (
+        normalized.includes(normalizedKey) ||
+        normalizedKey.includes(normalized)
+      ) {
+        const entry = FLAG_DICTIONARY[key];
+        return entry[language] || entry;
+      }
+    }
   }
 
-  return {
-    title: cleanFlag
-      .replaceAll("_", " ")
-      .replace(/\b\w/g, (letter) =>
-        letter.toUpperCase()
-      ),
-
-    explanation:
-      "The detection engine identified a suspicious pattern in the submitted content.",
-
-    action:
-      "Verify the information through an official and trusted source before acting.",
-  };
+  return genericCopy[language] || genericCopy.English;
 }
 
 
@@ -465,47 +538,9 @@ function formatFlag(flag) {
 ========================================================= */
 
 function getRiskClass(result) {
+  const score = getScore(result);
 
-  const rawRisk =
-    result?.risk_level ||
-    result?.risk ||
-    result?.verdict ||
-    "";
-
-  const risk =
-    String(rawRisk).toLowerCase();
-
-  if (
-    risk.includes("high") ||
-    risk.includes("critical") ||
-    risk.includes("danger")
-  ) {
-    return "critical";
-  }
-
-  if (
-    risk.includes("medium") ||
-    risk.includes("warning")
-  ) {
-    return "warning";
-  }
-
-  if (
-    risk.includes("low") ||
-    risk.includes("safe")
-  ) {
-    return "safe";
-  }
-
-  const score =
-    Number(
-      result?.risk_score ??
-      result?.score ??
-      result?.confidence ??
-      0
-    );
-
-  if (score >= 70) {
+  if (score >= 60) {
     return "critical";
   }
 
@@ -535,10 +570,6 @@ function getScore(result) {
 
   if (Number.isNaN(score)) {
     return 0;
-  }
-
-  if (score <= 1) {
-    score *= 100;
   }
 
   return Math.max(
@@ -731,7 +762,7 @@ function App() {
         mediaRecorderRef.current.start();
         setRecording(true);
         setError("");
-      } catch (err) {
+      } catch {
         setError("Microphone access denied or unsupported.");
       }
     }
@@ -1504,12 +1535,7 @@ function App() {
                 </h3>
 
 
-                <p>
-                  DhokaDetect analysed
-                  the available evidence
-                  and identified the
-                  signals shown below.
-                </p>
+                <p>{t.analysedEvidence}</p>
 
 
                 <div className="evidence-meta">
@@ -1574,41 +1600,30 @@ function App() {
                 <div className="flags-grid">
 
                   {flags
-                    .slice(0, 3)
                     .map(
                       (
                         flag,
                         index
                       ) => {
 
-                        const info =
-                          typeof flag ===
-                          "object"
+                        const backendFlag =
+                          flag && typeof flag === "object"
+                            ? flag
+                            : null;
 
-                            ? {
-                                title:
-                                  flag.title ||
-                                  "Suspicious signal",
+                        const baseIndicator = String(
+                          backendFlag?.indicator ||
+                          (typeof flag === "string" ? flag : "")
+                        ).replace(/\s*\(Evidence:.*$/i, "").trim();
 
-                                explanation:
-                                  flag.explanation ||
-                                  "The system identified a suspicious pattern.",
-
-                                action:
-                                  flag.preventive_measure ||
-                                  flag.action ||
-                                  "Verify before taking action.",
-                              }
-
-                            : formatFlag(
-                                flag
-                              );
+                        const info = formatFlag(baseIndicator, language);
+                        const isInformational = baseIndicator === "HUMAN_VOICE_SIGNAL";
 
 
                         return (
 
                           <div
-                            className="flag-card"
+                            className={`flag-card ${isInformational ? "informational" : ""}`}
 
                             key={`${flag}-${index}`}
                           >
@@ -1621,11 +1636,11 @@ function App() {
                             </div>
 
 
-                            <AlertTriangle
-                              className="flag-alert"
-
-                              size={17}
-                            />
+                            {isInformational ? (
+                              <CheckCircle2 className="flag-alert" size={17} />
+                            ) : (
+                              <AlertTriangle className="flag-alert" size={17} />
+                            )}
 
 
                             <h4>
@@ -1688,11 +1703,11 @@ function App() {
             <div className="analysis-footer">
 
               <span>
-                DHOKADETECT ENGINE
+                {t.footerEngine}
               </span>
 
               <span>
-                FASTAPI · NLP · URL · VISION · FUSION
+                {t.footerStack}
               </span>
 
               <span>

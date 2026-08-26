@@ -362,54 +362,45 @@ class LocalScamDetector:
         # ---------------------------------------------------------
 
         self.strong_english_scam_patterns = [
-            # KYC expiry + sensitive identity documents + urgency
             (
-                r"\bkyc\b.{0,80}(?:expired|incomplete|pending).{0,120}"
-                r"(?:submit|provide|share).{0,80}"
-                r"(?:pan|aadhaar).{0,100}"
-                r"(?:within|today|immediately|urgent|\d+\s*hours?)"
-            ),
-
-            # KYC expiry + PAN/Aadhaar + urgency
-            (
-                r"\bkyc\b.{0,100}(?:expired|incomplete|pending).{0,160}"
-                r"(?:pan|aadhaar).{0,120}"
+                r"\bkyc\b.{0,80}(?:expired|incomplete|pending)"
+                r".{0,120}"
+                r"(?:pan|aadhaar).{0,80}"
+                r"(?:submit|provide|share)"
+                r".{0,100}"
                 r"(?:within|today|immediately|urgent|\d+\s*hours?)"
             ),
         ]
 
+
         self.strong_hindi_scam_patterns = [
-            # Account block / closure + OTP
+            # Account block + OTP verification
             (
-                r"(?:अकाउंट|खाता).{0,80}"
-                r"(?:ब्लॉक|बंद).{0,100}"
-                r"(?:otp|वेरिफाई|verify)"
+                r"(?:अकाउंट|खाता).{0,50}(?:à¤¬à¥à¤²à¥‰à¤•|बंद)"
+                r".{0,100}(?:otp|वेरिफाई)"
             ),
 
-            # Account closure + KYC + urgency
+            # Account closure + KYC update + urgency
             (
-                r"(?:बैंक\s+खाता|खाता).{0,80}"
-                r"(?:बंद\s+हो\s+जाएगा|बंद).{0,100}"
-                r"(?:kyc).{0,100}"
-                r"(?:तुरंत|अपडेट)"
+                r"(?:बैंक\s+खाता|खाता).{0,60}"
+                r"(?:बंद\s+हो\s+à¤œà¤¾à¤à¤—à¤¾|बंद)"
+                r".{0,100}(?:kyc)"
+                r".{0,60}(?:à¤¤à¥à¤°à¤‚à¤¤|अपडेट)"
             ),
 
-            # KYC incomplete + account closure + link/click
+            # Incomplete KYC + closure threat + click link
             (
-                r"kyc.{0,80}"
-                r"(?:पूरा\s+नहीं\s+हुआ|अधूरा).{0,100}"
-                r"(?:खाता.{0,40}बंद|बंद).{0,100}"
-                r"(?:लिंक.{0,40}क्लिक)"
+                r"kyc.{0,50}(?:à¤ªà¥‚à¤°à¤¾\s+à¤¨à¤¹à¥€à¤‚\s+à¤¹à¥à¤†|à¤…à¤§à¥‚à¤°à¤¾)"
+                r".{0,100}(?:खाता.{0,30}बंद|बंद)"
+                r".{0,100}(?:à¤²à¤¿à¤‚à¤•.{0,30}à¤•à¥à¤²à¤¿à¤•)"
             ),
 
             # Refund + OTP / UPI PIN credential theft
             (
                 r"(?:रिफंड|वापसी).{0,100}"
-                r"(?:otp|upi\s*pin).{0,100}"
-                r"(?:दर्ज|दें|डालें|भेजें)"
+                r"(?:otp|upi\s*pin)"
+                r".{0,80}(?:à¤¦à¤°à¥à¤œ|दें|डालें|à¤­à¥‡à¤œà¥‡à¤‚)"
             ),
-
-            # Hinglish account closure + KYC
             (
                 r"\b(?:sbi\s+)?account\b.{0,80}"
                 r"(?:block\s+hone|band\s+hone).{0,100}"
@@ -421,47 +412,44 @@ class LocalScamDetector:
         self.strong_marathi_scam_patterns = [
             # Bank account closure + KYC + urgency + link/click
             (
-                r"(?:बँक\s+खाते|खाते).{0,80}"
-                r"(?:बंद\s+होणार|बंद\s+होईल|बंद).{0,100}"
+                r"(?:à¤¬à¤à¤•\s+खाते|खाते).{0,80}"
+                r"(?:बंद\s+होà¤£à¤¾à¤°|बंद\s+होà¤ˆà¤²|बंद).{0,100}"
                 r"(?:kyc).{0,100}"
-                r"(?:त्वरित|तात्काळ|लगेच|अपडेट).{0,100}"
-                r"(?:लिंक|क्लिक)"
+                r"(?:à¤¤à¥à¤µà¤°à¤¿à¤¤|à¤¤à¤¾à¤¤à¥à¤•à¤¾à¤³|लगेच|अपडेट).{0,100}"
+                r"(?:à¤²à¤¿à¤‚à¤•|à¤•à¥à¤²à¤¿à¤•)"
             ),
 
-            # Account closure + KYC + link
+             # Account closure + KYC + link
             (
-                r"(?:खाते|बँक\s+खाते).{0,80}"
-                r"(?:बंद\s+होणार|बंद\s+होईल|बंद).{0,100}"
+                r"(?:खाते|à¤¬à¤à¤•\s+खाते).{0,80}"
+                r"(?:बंद\s+होà¤£à¤¾à¤°|बंद\s+होà¤ˆà¤²|बंद).{0,100}"
                 r"(?:kyc).{0,100}"
-                r"(?:लिंक|क्लिक)"
+                r"(?:à¤²à¤¿à¤‚à¤•|à¤•à¥à¤²à¤¿à¤•)"
             ),
 
             # Refund + OTP + UPI PIN credential theft
             (
                 r"(?:रिफंड|परतावा).{0,100}"
-                r"(?:otp).{0,60}"
-                r"(?:upi\s*pin).{0,80}"
-                r"(?:द्या|दें)"
+                r"(?:otp).{0,60}(?:upi\s*pin)"
+                r".{0,80}(?:à¤¦à¥à¤¯à¤¾|दें)"
             ),
 
             # UPI PIN + OTP credential theft
             (
                 r"(?:रिफंड|परतावा).{0,100}"
-                r"(?:upi\s*pin).{0,60}"
-                r"(?:otp).{0,80}"
-                r"(?:द्या|दें)"
+                r"(?:upi\s*pin).{0,60}(?:otp)"
+                r".{0,80}(?:à¤¦à¥à¤¯à¤¾|दें)"
             ),
 
             # Refund + OTP request
             (
                 r"(?:रिफंड|परतावा).{0,100}"
-                r"(?:otp).{0,100}"
-                r"(?:द्या|दें|पाठवा)"
+                r"(?:otp).{0,100}(?:à¤¦à¥à¤¯à¤¾|दें|à¤ªà¤¾à¤ à¤µà¤¾)"
             ),
 
             # Benchmark-style Marathi refund phrase
             (
-                r"(?:रिफंड|परतावा).{0,50}मिळवण्यासाठी"
+                r"(?:रिफंड|परतावा).{0,50}मिळà¤µà¤£à¥à¤¯à¤¾à¤¸à¤¾à¤ à¥€"
                 r".{0,100}(?:otp|upi\s*pin)"
             ),
         ]
@@ -596,6 +584,14 @@ class LocalScamDetector:
 
         strong_english_scam_signal = bool(
             strong_english
+        )
+
+        critical_heuristic_signal = bool(
+            otp_pin
+            or (payment and urgency)
+            or (urgency and threat)
+            or (urgency and action)
+            or (sensitive and action)
         )
         # ---------------------------------------------------------
         # Scam combinations
@@ -736,6 +732,7 @@ class LocalScamDetector:
             "strong_regional_scam_signal": (
                 strong_regional_scam_signal
             ),
+            "critical_heuristic_signal": critical_heuristic_signal,
         }
 
     # -------------------------------------------------------------
@@ -745,11 +742,6 @@ class LocalScamDetector:
     def predict(self, texts: list):
         if not texts:
             return [], 0.0
-
-        # Normalize a single string into the expected batch format.
-        # This prevents character-by-character iteration such as "Y", "o", "u"...
-        if isinstance(texts, str):
-            texts = [texts]
 
         inputs = self.tokenizer(
             texts,
@@ -801,6 +793,10 @@ class LocalScamDetector:
                 heuristic_data["strong_scam_signal"]
             )
 
+            critical_heuristic_signal = (
+                heuristic_data["critical_heuristic_signal"]
+            )
+
             strong_regional_scam_signal = (
                 heuristic_data[
                     "strong_regional_scam_signal"
@@ -819,15 +815,14 @@ class LocalScamDetector:
             else:
                 hybrid_scam_score = bert_scam_prob
 
-                        # -----------------------------------------------------
+            # -----------------------------------------------------
             # Regional heuristic confidence floor
             #
             # English DistilBERT can assign extremely low scam
-            # probabilities to regional scam messages even when
+            # probabilities to Devanagari scam messages even when
             # explicit scam combinations are detected.
             #
-            # Only decisive regional combinations receive the
-            # higher confidence floor.
+            # Only decisive regional combinations receive this floor.
             # -----------------------------------------------------
 
             if strong_regional_scam_signal:
@@ -839,15 +834,14 @@ class LocalScamDetector:
                 red_flags.append(
                     "Regional Scam Confidence Floor Applied"
                 )
+                if strong_scam_signal and not strong_regional_scam_signal:
+                    hybrid_scam_score = max(
+                        hybrid_scam_score,
+                         0.65
+                    )
 
-            elif strong_scam_signal:
-                hybrid_scam_score = max(
-                    hybrid_scam_score,
-                    0.65
-                )
-
-                red_flags.append(
-                    "Strong Scam Confidence Floor Applied"
+                    red_flags.append(
+                        "Strong Scam Confidence Floor Applied"
                 )
 
             # -----------------------------------------------------
@@ -866,24 +860,11 @@ class LocalScamDetector:
             # -----------------------------------------------------
 
             if legitimate_status_confirmation:
-                hybrid_scam_score *= 0.20
+                 hybrid_scam_score *= 0.20
 
-                # Remove generic scam indicators that are false
-                # positives in a completed official status message.
-                red_flags = [
-                    flag
-                    for flag in red_flags
-                    if flag not in {
-                        "Sensitive Information Request Detected",
-                        "Entity Impersonation / Verification Pattern Detected",
-                        "Strong Scam Confidence Floor Applied",
-                        "Regional Scam Confidence Floor Applied",
-                    }
-                ]
-
-                red_flags.append(
-                    "Legitimate Official Status Confirmation Detected"
-                )
+                 red_flags.append(
+                     "Legitimate Official Status Confirmation Detected"
+                 )
 
             # -----------------------------------------------------
             # General legitimate-context calibration
@@ -898,6 +879,12 @@ class LocalScamDetector:
 
                 red_flags.append(
                     "Legitimate Transactional Context Detected"
+                )
+
+            if critical_heuristic_signal:
+                hybrid_scam_score = max(
+                    hybrid_scam_score,
+                    0.75
                 )
 
             hybrid_scam_score = round(
@@ -940,6 +927,8 @@ class LocalScamDetector:
                 "strong_regional_scam_signal": (
                     strong_regional_scam_signal
                 ),
+
+                "critical_heuristic_signal": critical_heuristic_signal,
             })
 
         return results, inference_time

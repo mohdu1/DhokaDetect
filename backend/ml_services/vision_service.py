@@ -84,7 +84,17 @@ class VisionService:
         return Image.open(image_input).convert("RGB")
 
     def detect_and_explain(self, file_input, task="payment"):
-        if isinstance(file_input, str) and file_input.lower().endswith(('.mp4', '.avi', '.mov', '.mkv')):
+        is_video = (
+            isinstance(file_input, str)
+            and file_input.lower().endswith(('.mp4', '.avi', '.mov', '.mkv'))
+        )
+
+        if isinstance(file_input, str) and not is_video:
+            probe = cv2.VideoCapture(file_input)
+            is_video = probe.isOpened() and probe.get(cv2.CAP_PROP_FRAME_COUNT) > 0
+            probe.release()
+
+        if is_video:
             return self._analyze_video(file_input, task)
         else:
             return self._analyze_image(file_input, task)

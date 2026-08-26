@@ -37,20 +37,14 @@ class TextAnalysisResult(BaseModel):
     risk_score: float = Field(..., ge=0.0, le=1.0)
 
 
-class DeepfakeAnalysisResult(BaseModel):
-    media_type: str = Field(..., pattern="^(image|video)$", description="Type of visual media analyzed")
-    face_manipulation_score: float = Field(..., ge=0.0, le=1.0, description="Spatial artifact score (e.g., EfficientNet/ViT)")
-    temporal_inconsistency_score: Optional[float] = Field(
-        None, ge=0.0, le=1.0, description="Frame-to-frame jitter/flicker score for video inputs"
-    )
-    metadata_tampering_score: float = Field(..., ge=0.0, le=1.0, description="EXIF/Container anomaly score")
-    frames_analyzed: Optional[int] = Field(None, ge=1, description="Total sampled frames if video")
+class VisualAnalysisResult(BaseModel):
+    manipulation_detected: bool = Field(..., description="True if manipulation or deepfake is detected")
+    qr_code_detected: bool = Field(..., description="True if a QR code is present in the visual media")
     risk_score: float = Field(..., ge=0.0, le=1.0)
 
 
 class AudioAnalysisResult(BaseModel):
-    voice_cloning_score: float = Field(..., ge=0.0, le=1.0, description="Synthetic voice/TTS likelihood")
-    spectral_artifact_score: float = Field(..., ge=0.0, le=1.0, description="Bispectral/Mel-spectrogram anomalies")
+    synthetic_voice_detected: bool = Field(..., description="True if synthetic voice/TTS is detected")
     risk_score: float = Field(..., ge=0.0, le=1.0)
 
 
@@ -85,7 +79,7 @@ class LocalizedGuidance(BaseModel):
 
 class ModalityBreakdown(BaseModel):
     text: Optional[TextAnalysisResult] = None
-    visual: Optional[DeepfakeAnalysisResult] = None
+    visual: Optional[VisualAnalysisResult] = None
     audio: Optional[AudioAnalysisResult] = None
     url: Optional[URLAnalysisResult] = None
 

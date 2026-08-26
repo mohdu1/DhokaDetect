@@ -10,6 +10,8 @@ from typing import Optional, Dict, Any, List
 from ml_services.model_manager import LocalScamDetector
 from url_detection import url_classifier
 from ml_services.fusion_engine import FusionEngine, ModalityScore
+
+# The Proper Schema Way: Importing the correctly defined schemas
 from schemas import (
     ScanResponse, RiskLevel, SeverityLevel, SupportedLanguage,
     TextAnalysisResult, URLAnalysisResult, VisualAnalysisResult, AudioAnalysisResult,
@@ -92,21 +94,49 @@ async def run_audio_analysis(audio_b64: str) -> Dict[str, Any]:
         return {"risk_score": 0.0, "verdict": "audio_fallback", "red_flags": [f"Audio Service Error: {str(exc)}"]}
 
 def to_text_score(res: Optional[Dict[str, Any]]) -> Optional[ModalityScore]:
-    return ModalityScore(confidence=res.get("scam_confidence", 0.0), weight=0.25, red_flags=res.get("red_flags", [])) if res else None
+    if not res:
+        return None
+    conf = res.get("scam_confidence", 0.0)
+    evidence = f"(Evidence: DistilBERT NLP confidence {conf * 100:.1f}%)"
+    flags = [f"{flag} {evidence}" for flag in res.get("red_flags", [])]
+    return ModalityScore(confidence=conf, weight=0.25, red_flags=flags)
 
 def to_url_score(res: Optional[Dict[str, Any]]) -> Optional[ModalityScore]:
-    return ModalityScore(confidence=res["top_risk_score"], weight=0.35, red_flags=res.get("top_reasons", [])) if res else None
+    if not res:
+        return None
+    url = res.get("top_url", "")
+    flags = [f"{reason} (Evidence: '{url}')" for reason in res.get("top_reasons", [])]
+    return ModalityScore(confidence=res["top_risk_score"], weight=0.35, red_flags=flags)
 
 def to_vision_score(res: Optional[Dict[str, Any]]) -> Optional[ModalityScore]:
-    return ModalityScore(confidence=res.get("risk_score", 0.0), weight=0.20, red_flags=res.get("red_flags", [])) if res else None
+    if not res:
+        return None
+    conf = res.get("risk_score", 0.0)
+    flags = list(res.get("red_flags", []))
+    if conf >= 0.5:
+        evidence = f"(Evidence: Swin Transformer confidence {conf * 100:.1f}%)"
+        flags = [f"{flag} {evidence}" for flag in flags]
+        if not flags:
+            flags.append(f"Visual Manipulation Detected {evidence}")
+    return ModalityScore(confidence=conf, weight=0.20, red_flags=flags)
 
 def to_audio_score(res: Optional[Dict[str, Any]]) -> Optional[ModalityScore]:
     if not res:
         return None
     conf = res.get("risk_score", 0.0)
-    flags = res.get("red_flags", [])
+    flags = list(res.get("red_flags", []))
     if conf >= 0.4:
-        flags.append(f"AI Synthetic Voice Flagged ({res.get('verdict', 'Suspicious')})")
+        verdict = res.get("verdict", "Suspicious")
+        flags.append(
+            f"AI Synthetic Voice Flagged (Evidence: Wav2Vec2 detected "
+            f"Mel-spectrogram anomalies with {conf * 100:.1f}% confidence. "
+            f"Verdict: {verdict})"
+        )
+    elif res.get("status") != "audio_fallback" and res.get("verdict") != "audio_fallback":
+        flags.append(
+            "HUMAN_VOICE_SIGNAL (Evidence: Audio recording analyzed; no "
+            "synthetic-voice anomaly detected.)"
+        )
     return ModalityScore(confidence=conf, weight=0.20, red_flags=flags)
 
 def build_scan_response(fusion: Dict[str, Any], text: Optional[str], text_res: Optional[Dict[str, Any]], url_res: Optional[Dict[str, Any]], vis_res: Optional[Dict[str, Any]], aud_res: Optional[Dict[str, Any]]) -> ScanResponse:

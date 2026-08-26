@@ -70,8 +70,41 @@ body {
   color:
     var(--white);
 
-  overflow:
+  overflow-x:
     hidden;
+
+  overflow-y:
+    auto;
+
+  scrollbar-width:
+    thin;
+
+  scrollbar-color:
+    var(--muted-dark) transparent;
+}
+
+
+body::-webkit-scrollbar {
+
+  width:
+    6px;
+}
+
+
+body::-webkit-scrollbar-track {
+
+  background:
+    transparent;
+}
+
+
+body::-webkit-scrollbar-thumb {
+
+  border-radius:
+    999px;
+
+  background:
+    var(--muted-dark);
 }
 
 
@@ -94,9 +127,11 @@ select {
 
   width: 100vw;
 
-  height: 100vh;
+  min-height: 100vh;
 
-  overflow: hidden;
+  height: auto;
+
+  overflow: visible;
 
   background:
 
@@ -593,10 +628,12 @@ select {
 
   width: 100%;
 
-  height:
+  min-height:
     calc(100vh - 78px);
 
-  overflow: hidden;
+  height: auto;
+
+  overflow: visible;
 }
 
 
@@ -609,7 +646,7 @@ select {
   width:
     min(1060px, calc(100% - 80px));
 
-  height: 100%;
+  min-height: 100%;
 
   margin: auto;
 
@@ -638,9 +675,9 @@ select {
 
 .hero-copy {
 
-  margin-top: 17px;
+  margin-top: 2vh;
 
-  margin-bottom: 28px;
+  margin-bottom: 3vh;
 }
 
 
@@ -752,6 +789,8 @@ select {
 
   width: 100%;
 
+  margin-top: -1vh;
+
   border:
     1px solid var(--line-strong);
 
@@ -830,7 +869,7 @@ select {
 
   width: 100%;
 
-  height: 190px;
+  height: 18vh;
 
   padding: 25px;
 
@@ -2150,7 +2189,7 @@ select {
   width:
     min(1120px, calc(100% - 80px));
 
-  height: 100%;
+  min-height: calc(100vh - 78px);
 
   margin: auto;
 
@@ -2239,7 +2278,7 @@ select {
 
   gap: 55px;
 
-  padding: 25px 0;
+  padding: 2vh 0;
 
   border-bottom:
     1px solid var(--line);
@@ -2633,6 +2672,9 @@ select {
 
   position: relative;
 
+  min-width:
+    0;
+
   min-height: 145px;
 
   padding: 17px;
@@ -2646,6 +2688,23 @@ select {
   transition:
     transform .2s ease,
     border-color .2s ease;
+}
+
+
+.flag-card.informational {
+
+  border-color:
+    rgba(117, 168, 137, .35);
+
+  background:
+    rgba(117, 168, 137, .06);
+}
+
+
+.flag-card.informational .flag-alert {
+
+  color:
+    var(--green);
 }
 
 
@@ -2696,6 +2755,9 @@ select {
 
   font-weight:
     600;
+
+  overflow-wrap:
+    anywhere;
 }
 
 
@@ -2712,6 +2774,9 @@ select {
 
   line-height:
     1.5;
+
+  overflow-wrap:
+    anywhere;
 }
 
 
@@ -2728,6 +2793,9 @@ select {
 
   line-height:
     1.4;
+
+  overflow-wrap:
+    anywhere;
 }
 
 
@@ -2807,15 +2875,14 @@ select {
 
 .analysis-footer {
 
-  position: absolute;
+  position: static;
 
-  left: 40px;
-
-  right: 40px;
-
-  bottom: 14px;
+  margin: 32px 0 14px;
 
   display: flex;
+
+  flex-wrap:
+    wrap;
 
   align-items: center;
 
@@ -2827,6 +2894,9 @@ select {
   font-size: 6px;
 
   letter-spacing: 1.4px;
+
+  gap:
+    8px 18px;
 }
 
 
