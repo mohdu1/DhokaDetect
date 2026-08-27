@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronDown,
   Check,
+  FileText,
 } from "lucide-react";
 
 import "./App.css";
@@ -91,6 +92,15 @@ const translations = {
     footer:
       "DETECT · EXPLAIN · PROTECT",
 
+    submittedInput: "SUBMITTED INPUT",
+    originalEvidence: "ORIGINAL EVIDENCE",
+    viewFull: "VIEW FULL",
+    noTextSubmitted: "No text submitted.",
+    image: "IMAGE",
+    video: "VIDEO",
+    audio: "AUDIO",
+    fileLabel: "FILE",
+
     systemError:
       "Unable to analyse the content. Please check the backend connection.",
   },
@@ -161,6 +171,15 @@ const translations = {
     footer:
       "पहचानें · समझें · सुरक्षित रहें",
 
+    submittedInput: "जमा किया गया इनपुट",
+    originalEvidence: "मूल सामग्री",
+    viewFull: "पूरा देखें",
+    noTextSubmitted: "कोई टेक्स्ट जमा नहीं किया गया।",
+    image: "छवि",
+    video: "वीडियो",
+    audio: "ऑडियो",
+    fileLabel: "फ़ाइल",
+
     systemError:
       "जाँच नहीं हो सकी। कृपया बैकएंड कनेक्शन जाँचें।",
   },
@@ -230,6 +249,15 @@ const translations = {
 
     footer:
       "ओळखा · समजून घ्या · सुरक्षित रहा",
+
+    submittedInput: "सादर केलेले इनपुट",
+    originalEvidence: "मूळ सामग्री",
+    viewFull: "पूर्ण पहा",
+    noTextSubmitted: "कोणताही मजकूर सादर केलेला नाही.",
+    image: "प्रतिमा",
+    video: "व्हिडिओ",
+    audio: "ऑडिओ",
+    fileLabel: "फाइल",
 
     systemError:
       "तपासणी होऊ शकली नाही. कृपया बॅकएंड कनेक्शन तपासा.",
@@ -706,8 +734,33 @@ function App() {
   const [recording, setRecording] =
     useState(false);
 
+  const [submittedPreviewOpen, setSubmittedPreviewOpen] =
+    useState(false);
+
+  const [filePreviewUrl, setFilePreviewUrl] =
+    useState(null);
+
+  const [showPreview, setShowPreview] =
+    useState(false);
+
   const t =
     translations[language];
+
+  useEffect(() => {
+    if (!file) {
+      setFilePreviewUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setFilePreviewUrl(url);
+
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const togglePreview = () => {
+    setShowPreview((prev) => !prev);
+  };
 
 
   /* =======================================================
@@ -725,6 +778,7 @@ function App() {
       }
 
       setFile(selectedFile);
+      setShowPreview(false);
       setError("");
       setResult(null);
     };
@@ -781,6 +835,8 @@ function App() {
     setResult(null);
     setError("");
     setLoading(false);
+    setSubmittedPreviewOpen(false);
+    setShowPreview(false);
     
     if (recording && mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
@@ -1226,37 +1282,140 @@ function App() {
               />
 
 
-              {/* FILE CHIP - Modified to include audio recording */}
+              {/* ATTACHED FILE / AUDIO CHIP + PREVIEW */}
 
               {(file || recordedAudioBase64) && (
-
-                <div className="file-chip">
-
-                  <Paperclip
-                    size={13}
-                  />
-
-                  <span>
-                    {file ? file.name : "Recorded Voice Note (.wav)"}
-                  </span>
-
-                  <button
-                    onClick={() => {
-                      setFile(null);
-                      setRecordedAudioBase64(null);
+                <div
+                  className="media-attachment-container"
+                  style={{ margin: "10px 0" }}
+                >
+                  <div
+                    onClick={togglePreview}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        togglePreview();
+                      }
                     }}
-
-                    disabled={
-                      loading
-                    }
+                    style={{
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "7px",
+                      padding: "7px 11px",
+                      background: "rgba(255, 255, 255, 0.06)",
+                      border: "1px solid rgba(242, 241, 237, 0.13)",
+                      borderRadius: "15px",
+                      color: "#ddddda",
+                      fontSize: "9px",
+                      maxWidth: "80%",
+                    }}
+                    title="Click to view attachment"
                   >
+                    <Paperclip size={13} />
 
-                    <X size={13} />
+                    <span
+                      style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {file ? file.name : "Recorded Voice Note (.wav)"}
+                    </span>
 
-                  </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setFile(null);
+                        setRecordedAudioBase64(null);
+                        setShowPreview(false);
+                      }}
+                      disabled={loading}
+                      aria-label="Remove attachment"
+                      style={{
+                        display: "flex",
+                        border: "none",
+                        background: "transparent",
+                        color: "var(--muted)",
+                        cursor: loading ? "default" : "pointer",
+                        padding: 0,
+                      }}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
 
+                  {showPreview && (
+                    <div
+                      className="media-preview"
+                      style={{
+                        marginTop: "10px",
+                        padding: "10px",
+                        border: "1px solid rgba(242, 241, 237, 0.13)",
+                        borderRadius: "5px",
+                        background: "rgba(255, 255, 255, 0.025)",
+                      }}
+                    >
+                      {file &&
+                        file.type.startsWith("image/") &&
+                        filePreviewUrl && (
+                          <img
+                            src={filePreviewUrl}
+                            alt="Preview"
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: "300px",
+                              display: "block",
+                              objectFit: "contain",
+                            }}
+                          />
+                        )}
+
+                      {file &&
+                        file.type.startsWith("video/") &&
+                        filePreviewUrl && (
+                          <video
+                            controls
+                            playsInline
+                            src={filePreviewUrl}
+                            style={{
+                              maxWidth: "100%",
+                              maxHeight: "300px",
+                              display: "block",
+                            }}
+                          />
+                        )}
+
+                      {file &&
+                        file.type.startsWith("audio/") &&
+                        filePreviewUrl && (
+                          <audio
+                            controls
+                            src={filePreviewUrl}
+                            style={{
+                              display: "block",
+                              width: "100%",
+                            }}
+                          />
+                        )}
+
+                      {recordedAudioBase64 && !file && (
+                        <audio
+                          controls
+                          src={`data:audio/wav;base64,${recordedAudioBase64}`}
+                          style={{
+                            display: "block",
+                            width: "100%",
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
-
               )}
 
 
@@ -1402,10 +1561,6 @@ function App() {
             <div className="result-topline">
 
               <div>
-
-                <div className="section-number">
-                  02 / ANALYSIS
-                </div>
 
                 <h2>
                   {t.analysisComplete}
@@ -1575,7 +1730,163 @@ function App() {
 
               </div>
 
+
+              {/* SUBMITTED INPUT */}
+
+              <div className="submitted-input-block">
+
+                <div className="submitted-input-heading">
+                  <span>{t.submittedInput}</span>
+                  <span className="submitted-input-type">
+                    {file
+                      ? file.type.startsWith("image/")
+                        ? "IMAGE"
+                        : file.type.startsWith("video/")
+                        ? "VIDEO"
+                        : file.type.startsWith("audio/")
+                        ? "AUDIO"
+                        : "FILE"
+                      : recordedAudioBase64
+                      ? "AUDIO"
+                      : "TEXT / URL"}
+                  </span>
+                </div>
+
+                <div
+                  className={`submitted-input-preview ${
+                    file ? "has-file" : ""
+                  }`}
+                >
+                  {file && file.type.startsWith("image/") && filePreviewUrl ? (
+                    <img
+                      src={filePreviewUrl}
+                      alt={t.submittedInput}
+                    />
+                  ) : file && file.type.startsWith("video/") && filePreviewUrl ? (
+                    <video
+                      src={filePreviewUrl}
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                  ) : file && file.type.startsWith("audio/") && filePreviewUrl ? (
+                    <div className="submitted-audio-preview">
+                      <div className="submitted-audio-bars" aria-hidden="true">
+                        {Array.from({ length: 18 }).map((_, index) => (
+                          <span
+                            key={index}
+                            style={{
+                              height: `${12 + ((index * 17) % 25)}px`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <audio
+                        src={filePreviewUrl}
+                        controls
+                      />
+                    </div>
+                  ) : recordedAudioBase64 ? (
+                    <div className="submitted-audio-preview">
+                      <div className="submitted-audio-bars" aria-hidden="true">
+                        {Array.from({ length: 18 }).map((_, index) => (
+                          <span
+                            key={index}
+                            style={{
+                              height: `${12 + ((index * 17) % 25)}px`,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <audio
+                        src={`data:audio/wav;base64,${recordedAudioBase64}`}
+                        controls
+                      />
+                    </div>
+                  ) : (
+                    <div className="submitted-text-preview">
+                      <FileText
+                        size={16}
+                        strokeWidth={1.4}
+                      />
+                      <p>
+                        {input.trim() || t.noTextSubmitted}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="submitted-view-btn"
+                  onClick={() => setSubmittedPreviewOpen(true)}
+                >
+                  <span>{t.viewFull}</span>
+
+                </button>
+
+              </div>
+
             </div>
+
+
+            {/* FULL SUBMITTED INPUT MODAL */}
+
+            {submittedPreviewOpen && (
+              <div
+                className="submitted-modal-backdrop"
+                onClick={() => setSubmittedPreviewOpen(false)}
+              >
+                <div
+                  className="submitted-modal"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="submitted-modal-header">
+                    <div>
+                      <span>{t.submittedInput}</span>
+                      <strong>ORIGINAL EVIDENCE</strong>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSubmittedPreviewOpen(false)}
+                      aria-label={t.reset}
+                    >
+                      <X size={16} strokeWidth={1.7} />
+                    </button>
+                  </div>
+
+                  <div className="submitted-modal-content">
+                    {file && file.type.startsWith("image/") && filePreviewUrl ? (
+                      <img
+                        src={filePreviewUrl}
+                        alt={t.originalEvidence}
+                      />
+                    ) : file && file.type.startsWith("video/") && filePreviewUrl ? (
+                      <video
+                        src={filePreviewUrl}
+                        controls
+                        playsInline
+                      />
+                    ) : file && file.type.startsWith("audio/") && filePreviewUrl ? (
+                      <audio
+                        src={filePreviewUrl}
+                        controls
+                      />
+                    ) : recordedAudioBase64 ? (
+                      <audio
+                        src={`data:audio/wav;base64,${recordedAudioBase64}`}
+                        controls
+                      />
+                    ) : (
+                      <div className="submitted-full-text">
+                        {input.trim() || t.noTextSubmitted}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
 
             {/* SIGNALS */}
