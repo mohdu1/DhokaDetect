@@ -12,19 +12,19 @@ from pydantic import BaseModel, Field
 # PROJECT IMPORTS
 # =========================================================
 
-from backend.ml_services.model_manager import LocalScamDetector
-from backend.url_detection.url_classifier import (
+from ml_services.model_manager import LocalScamDetector
+from url_detection.url_classifier import (
     calculate_risk_score,
     detect_typosquatting,
 )
-from backend.ml_services.fusion_engine import (
+from ml_services.fusion_engine import (
     FusionEngine,
     ModalityScore,
 )
-from backend.ml_services.indicator_mapping import normalize_indicator
-from backend.ml_services.translation_fallback import get_fallback_translation
+from ml_services.indicator_mapping import normalize_indicator
+from ml_services.translation_fallback import get_fallback_translation
 
-from backend.schemas import (
+from schemas import (
     ScanResponse,
     RiskLevel,
     SeverityLevel,
