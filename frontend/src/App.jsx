@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   Background,
   Controls,
-  MiniMap,
   Handle,
   Position,
 } from "@xyflow/react";
@@ -14,199 +13,9 @@ import "./App.css";
  * ============================================================
  * DHOKADETECT
  * Dark Web Intelligence Analyst Dashboard
- * Step 1 - Frontend Graph Prototype
- *
- * Backend integration:
- * The graph is currently powered by mock data.
- * Later this can be replaced with:
- *
- * GET /graph
- *
- * {
- *   "nodes": [...],
- *   "edges": [...]
- * }
+ * Graph data is loaded from GET /api/v1/graph.
  * ============================================================
  */
-
-/* ------------------------------------------------------------
-   MOCK INTELLIGENCE DATA
------------------------------------------------------------- */
-
-const INITIAL_NODES = [
-  {
-    id: "actor-01",
-    type: "intelligence",
-    position: { x: 80, y: 180 },
-    data: {
-      label: "Shadow Broker",
-      category: "Threat Actor",
-      status: "Active",
-      description:
-        "Threat actor associated with multiple underground identities and infrastructure.",
-      metadata: {
-        "First Seen": "2026-08-12",
-        "Last Seen": "2026-09-28",
-        Confidence: "High",
-        Sources: "7",
-      },
-    },
-  },
-  {
-    id: "user-01",
-    type: "intelligence",
-    position: { x: 360, y: 80 },
-    data: {
-      label: "dark_user_47",
-      category: "Username",
-      status: "Observed",
-      description:
-        "Underground username linked to multiple intelligence records.",
-      metadata: {
-        Platform: "Forum",
-        "First Seen": "2026-08-18",
-        Activity: "Recent",
-        Confidence: "Medium",
-      },
-    },
-  },
-  {
-    id: "domain-01",
-    type: "intelligence",
-    position: { x: 650, y: 170 },
-    data: {
-      label: "shadowmarket.onion",
-      category: "Domain",
-      status: "Active",
-      description:
-        "Dark-web domain associated with the selected intelligence cluster.",
-      metadata: {
-        Network: "Tor",
-        Status: "Online",
-        "First Seen": "2026-08-21",
-        Confidence: "High",
-      },
-    },
-  },
-  {
-    id: "ip-01",
-    type: "intelligence",
-    position: { x: 950, y: 80 },
-    data: {
-      label: "185.XXX.42.19",
-      category: "IP Address",
-      status: "Observed",
-      description:
-        "Infrastructure indicator associated with the domain.",
-      metadata: {
-        Provider: "Unknown",
-        Network: "Tor Exit",
-        Country: "Unknown",
-        Confidence: "Medium",
-      },
-    },
-  },
-  {
-    id: "wallet-01",
-    type: "intelligence",
-    position: { x: 950, y: 300 },
-    data: {
-      label: "bc1q...7h4x",
-      category: "Crypto Wallet",
-      status: "Flagged",
-      description:
-        "Cryptocurrency wallet referenced by multiple underground records.",
-      metadata: {
-        Currency: "Bitcoin",
-        Transactions: "24",
-        "First Seen": "2026-08-27",
-        Confidence: "High",
-      },
-    },
-  },
-  {
-    id: "market-01",
-    type: "intelligence",
-    position: { x: 650, y: 430 },
-    data: {
-      label: "Night Market",
-      category: "Marketplace",
-      status: "Active",
-      description:
-        "Underground marketplace node connected to the intelligence cluster.",
-      metadata: {
-        Network: "Tor",
-        Category: "Marketplace",
-        Listings: "1,842",
-        Confidence: "High",
-      },
-    },
-  },
-  {
-    id: "email-01",
-    type: "intelligence",
-    position: { x: 350, y: 400 },
-    data: {
-      label: "contact@shadowmail",
-      category: "Email",
-      status: "Observed",
-      description:
-        "Email identifier found in several related intelligence records.",
-      metadata: {
-        "First Seen": "2026-09-01",
-        Mentions: "12",
-        Confidence: "Medium",
-      },
-    },
-  },
-];
-
-const INITIAL_EDGES = [
-  {
-    id: "e-actor-user",
-    source: "actor-01",
-    target: "user-01",
-    label: "USES",
-    animated: true,
-  },
-  {
-    id: "e-user-domain",
-    source: "user-01",
-    target: "domain-01",
-    label: "LINKED TO",
-    animated: true,
-  },
-  {
-    id: "e-domain-ip",
-    source: "domain-01",
-    target: "ip-01",
-    label: "RESOLVES TO",
-  },
-  {
-    id: "e-domain-wallet",
-    source: "domain-01",
-    target: "wallet-01",
-    label: "REFERENCES",
-  },
-  {
-    id: "e-domain-market",
-    source: "domain-01",
-    target: "market-01",
-    label: "OPERATES",
-  },
-  {
-    id: "e-actor-email",
-    source: "actor-01",
-    target: "email-01",
-    label: "ASSOCIATED",
-  },
-  {
-    id: "e-email-market",
-    source: "email-01",
-    target: "market-01",
-    label: "MENTIONED IN",
-  },
-];
 
 /* ------------------------------------------------------------
    NODE ICONS
@@ -214,12 +23,9 @@ const INITIAL_EDGES = [
 
 const CATEGORY_SYMBOLS = {
   "Threat Actor": "TA",
-  Username: "US",
-  Domain: "DO",
-  "IP Address": "IP",
-  "Crypto Wallet": "CW",
-  Marketplace: "MP",
-  Email: "@",
+  Cryptocurrency: "₿",
+  Infrastructure: "IN",
+  Communication: "COM",
 };
 
 /* ------------------------------------------------------------
@@ -259,12 +65,52 @@ const nodeTypes = {
 ------------------------------------------------------------ */
 
 function App() {
-  const [nodes, setNodes] = useState(INITIAL_NODES);
-  const [edges, setEdges] = useState(INITIAL_EDGES);
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
 
   const [selectedNode, setSelectedNode] = useState(null);
   const [search, setSearch] = useState("");
   const [activeView, setActiveView] = useState("Graph");
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadGraph() {
+      try {
+        const response = await fetch(
+          "http://127.0.0.1:8000/api/v1/graph",
+          { signal: controller.signal },
+        );
+
+        if (!response.ok) {
+          throw new Error(`Graph request failed (${response.status}).`);
+        }
+
+        const graph = await response.json();
+        if (!Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
+          throw new Error("Graph API returned an invalid response.");
+        }
+
+        setNodes(graph.nodes);
+        setEdges(graph.edges);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setLoadError(
+            error instanceof Error ? error.message : "Unable to load graph data.",
+          );
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadGraph();
+    return () => controller.abort();
+  }, []);
 
   /* ----------------------------------------------------------
      SEARCH
@@ -366,6 +212,28 @@ function App() {
       value: nodes.filter((node) => node.data.status === "Active").length,
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div
+        className="dark-web-app"
+        style={{ display: "grid", minHeight: "100vh", placeItems: "center" }}
+      >
+        Initializing Intelligence Matrix...
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div
+        className="dark-web-app"
+        style={{ display: "grid", minHeight: "100vh", placeItems: "center" }}
+      >
+        <div role="alert">Unable to load intelligence graph: {loadError}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="dark-web-app">
@@ -587,10 +455,6 @@ function App() {
                 showInteractive={false}
               />
 
-              <MiniMap
-                pannable
-                zoomable
-              />
             </ReactFlow>
 
             <div className="graph-overlay">
